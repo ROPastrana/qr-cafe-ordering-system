@@ -363,16 +363,13 @@ export default function App() {
     >
       {/* Full-bleed image */}
       <img
-        src="https://images.unsplash.com/photo-1770494347735-4a6b50086124?w=800&h=1100&fit=crop&auto=format&crop=center"
-        alt="Latte art in a dark mug"
-        className="absolute inset-0 w-full h-full object-cover"
+        src="https://images.unsplash.com/photo-1762657440603-67275ae3f7f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=85&w=1800"
+        alt="Barista pouring milk into a cup of coffee"
+        className="splash-image absolute inset-0 w-full h-full object-cover"
       />
 
-      {/* Gradient: light at top for logo, heavy at bottom for content */}
-      <div
-        className="absolute inset-0"
-        style={{ background: "linear-gradient(to bottom, rgba(17,17,19,0.55) 0%, rgba(17,17,19,0.05) 35%, rgba(17,17,19,0.08) 50%, rgba(17,17,19,0.88) 72%, rgba(17,17,19,1) 100%)" }}
-      />
+      {/* Layered contrast for readable content at every viewport */}
+      <div className="splash-overlay absolute inset-0" />
 
       {/* Top: logo mark + wordmark */}
       <div className="splash-top absolute top-0 left-0 right-0 flex items-center gap-3 px-6 pt-12">
@@ -395,24 +392,30 @@ export default function App() {
       </div>
 
       {/* Bottom: headline + CTA */}
-      <div className="splash-content absolute bottom-0 left-0 right-0 px-6 pb-12">
-        <p className="text-[11px] font-semibold tracking-[0.18em] uppercase mb-3" style={{ color: C.accent }}>Now serving</p>
-        <h1 className="text-[36px] font-extrabold leading-[1.08] mb-4" style={{ color: C.white, letterSpacing: "-0.025em" }}>
-          Every cup,<br />crafted with care.
+      <div className="splash-content absolute left-0 right-0 px-6">
+        <div className="splash-eyebrow flex items-center gap-2.5 mb-4">
+          <span className="block w-8 h-px" style={{ backgroundColor: C.accent }} />
+          <p className="text-[11px] font-bold tracking-[0.2em] uppercase" style={{ color: C.accentLight }}>Freshly made for you</p>
+        </div>
+        <h1 className="splash-title font-extrabold leading-[1.02] mb-4" style={{ color: C.white, letterSpacing: "-0.04em" }}>
+          Slow coffee.<br />Good moments.
         </h1>
-        <p className="text-[13px] leading-relaxed mb-8" style={{ color: "rgba(242,242,242,0.55)" }}>
-          Specialty drinks &amp; freshly baked pastries, made to order.
+        <p className="splash-description text-[14px] leading-relaxed mb-7" style={{ color: "rgba(242,242,242,0.72)" }}>
+          Specialty drinks and freshly baked pastries, thoughtfully prepared when you order.
         </p>
 
         <button
           onClick={() => goTo("menu")}
-          className="w-full py-[15px] rounded-2xl text-[15px] font-bold tracking-tight transition-all duration-200 active:scale-[0.97]"
+          className="splash-cta w-full py-[15px] px-6 rounded-2xl text-[15px] font-bold tracking-tight transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2"
           style={{ backgroundColor: C.accent, color: C.white }}
         >
           Order Now
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M5 12h14m-5-5 5 5-5 5" />
+          </svg>
         </button>
 
-        <div className="flex items-center justify-center gap-3 mt-5">
+        <div className="splash-services flex items-center justify-center gap-3 mt-5">
           {["Dine In", "Take Out", "Table Service"].map((t, i) => (
             <span key={t} className="flex items-center gap-3">
               <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{t}</span>
