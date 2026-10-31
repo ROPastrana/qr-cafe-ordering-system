@@ -161,18 +161,18 @@ function Sidebar({ screen, onNav, onLogout }: SidebarProps) {
     s === screen || (s === "queue" && screen === "workspace") || (s === "manual" && screen === "checkout");
 
   return (
-    <aside style={{ width: 240, minWidth: 240, backgroundColor: C.sidebar, display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0 }}>
-      <div style={{ padding: "20px 16px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+    <aside className="app-sidebar" style={{ width: 240, minWidth: 240, backgroundColor: C.sidebar, display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0 }}>
+      <div className="sidebar-brand" style={{ padding: "20px 16px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: C.orange, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconCoffee />
           </div>
-          <span style={{ color: "white", fontWeight: 700, fontSize: 13, letterSpacing: "0.08em", lineHeight: 1.2 }}>
+          <span className="sidebar-brand-name" style={{ color: "white", fontWeight: 700, fontSize: 13, letterSpacing: "0.08em", lineHeight: 1.2 }}>
             ORDERING<br />SYSTEM POS
           </span>
         </div>
       </div>
-      <nav style={{ padding: "16px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+      <nav className="sidebar-nav" style={{ padding: "16px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
         {navItems.map((item) => (
           <button
             key={item.id}
@@ -188,11 +188,11 @@ function Sidebar({ screen, onNav, onLogout }: SidebarProps) {
             onMouseOver={(e) => { if (!active(item.id)) e.currentTarget.style.backgroundColor = C.sidebarHover; }}
             onMouseOut={(e) => { if (!active(item.id)) e.currentTarget.style.backgroundColor = "transparent"; }}
           >
-            {item.icon}{item.label}
+            {item.icon}<span className="sidebar-nav-label">{item.label}</span>
           </button>
         ))}
       </nav>
-      <div style={{ margin: "0 12px 12px", padding: "12px 14px", borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)" }}>
+      <div className="sidebar-profile" style={{ margin: "0 12px 12px", padding: "12px 14px", borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden" }}>
             <svg viewBox="0 0 36 36" width="36" height="36" fill="none">
@@ -208,6 +208,7 @@ function Sidebar({ screen, onNav, onLogout }: SidebarProps) {
         </div>
       </div>
       <button
+        className="sidebar-logout"
         onClick={onLogout}
         style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px 18px", color: "rgba(255,255,255,0.5)", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}
       >
@@ -225,12 +226,12 @@ function TopBar({ title, subtitle }: { title: string; subtitle: string }) {
   const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   const dateStr = `${days[now.getDay()]} · ${months[now.getMonth()]} ${now.getDate()}`;
   return (
-    <div style={{ padding: "20px 32px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: C.pageBg }}>
+    <div className="top-bar" style={{ padding: "20px 32px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: C.pageBg }}>
       <div>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, margin: 0 }}>{title}</h1>
         <p style={{ fontSize: 13, color: C.textSecondary, margin: "2px 0 0" }}>{subtitle}</p>
       </div>
-      <div style={{ textAlign: "right" }}>
+      <div className="top-bar-clock" style={{ textAlign: "right" }}>
         <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>{timeStr}</div>
         <div style={{ fontSize: 12, color: C.textSecondary }}>{dateStr}</div>
       </div>
@@ -666,9 +667,9 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     setTimeout(onLogin, 600);
   };
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: C.pageBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ display: "flex", borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.15)", width: 860, maxWidth: "95vw" }}>
-        <div style={{ width: 380, position: "relative", overflow: "hidden" }}>
+    <div className="login-screen" style={{ minHeight: "100vh", backgroundColor: C.pageBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="login-card" style={{ display: "flex", borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.15)", width: 860, maxWidth: "95vw" }}>
+        <div className="login-visual" style={{ width: 380, position: "relative", overflow: "hidden" }}>
           <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=760&h=640&fit=crop&auto=format" alt="Café interior" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(30,10,5,0.5) 0%, rgba(30,10,5,0.75) 100%)" }} />
           <div style={{ position: "absolute", top: 24, left: 24, display: "flex", alignItems: "center", gap: 10 }}>
@@ -680,7 +681,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Providing the best service to our beloved guests, one cup at a time.</p>
           </div>
         </div>
-        <div style={{ flex: 1, backgroundColor: "white", padding: "48px 44px" }}>
+        <div className="login-form-panel" style={{ flex: 1, backgroundColor: "white", padding: "48px 44px" }}>
           <h2 style={{ fontSize: 26, fontWeight: 700, color: C.textPrimary, margin: "0 0 6px" }}>Cashier Sign In</h2>
           <p style={{ fontSize: 14, color: C.textSecondary, margin: "0 0 36px" }}>Enter your system credentials to access Station 1</p>
           <form onSubmit={handleSubmit}>
@@ -731,8 +732,8 @@ function OrderQueue({ orders, onAccept, onMarkReady, onCompleteReady, onDecline,
   return (
     <>
       <TopBar title="Live Orders Queue" subtitle="Real-time order tracker and status actions" />
-      <div style={{ padding: "20px 24px", flex: 1, overflowY: "auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, alignItems: "start" }}>
+      <div className="queue-scroll" style={{ padding: "20px 24px", flex: 1, overflowY: "auto" }}>
+        <div className="queue-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, alignItems: "start" }}>
           {cols.map((col) => {
             const colOrders = orders.filter((o) => o.status === col.status);
             return (
@@ -858,9 +859,9 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
   return (
     <>
       <TopBar title="Order Workspace" subtitle="Accept and settle payment for incoming QR/website orders" />
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <div className="workspace-layout" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Left: Active Orders List */}
-        <div style={{ width: 280, borderRight: `1px solid ${C.border}`, overflowY: "auto", padding: "16px" }}>
+        <div className="workspace-list" style={{ width: 280, borderRight: `1px solid ${C.border}`, overflowY: "auto", padding: "16px" }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: C.textSecondary, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Incoming Orders</p>
           {activeOrders.length === 0 && <p style={{ fontSize: 13, color: C.textMuted, textAlign: "center", marginTop: 40 }}>No pending orders</p>}
           {activeOrders.map((o) => (
@@ -888,7 +889,7 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
             <p style={{ color: C.textMuted, fontSize: 15 }}>Select an order to view details</p>
           </div>
         ) : (
-          <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
+          <div className="workspace-detail" style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <h2 style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, margin: 0 }}>Order #{order.id}</h2>
@@ -1049,9 +1050,9 @@ function ManualEntry({ cart, customerName, fulfillment, onAddItem, onUpdateQty, 
   return (
     <>
       <TopBar title="Walk-In & Manual Ordering" subtitle="Add items directly to construct table/dine-in orders" />
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <div className="manual-layout" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Left: Menu catalog */}
-        <div style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
+        <div className="menu-catalog" style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
           {/* Category tabs */}
           <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
             {cats.map((c) => (
@@ -1063,7 +1064,7 @@ function ManualEntry({ cart, customerName, fulfillment, onAddItem, onUpdateQty, 
             ))}
           </div>
           {/* Item grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+          <div className="menu-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
             {filtered.map((item) => {
               const inCart = cartTotalQty(item.id);
               return (
@@ -1100,7 +1101,7 @@ function ManualEntry({ cart, customerName, fulfillment, onAddItem, onUpdateQty, 
         </div>
 
         {/* Right: Cart */}
-        <div style={{ width: 320, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column" }}>
+        <div className="cart-panel" style={{ width: 320, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary }}>Current Cart Order</span>
             <TypeBadge type={fulfillment} />
@@ -1200,8 +1201,8 @@ function PaymentCheckout({ order, onConfirm, onBack }: CheckoutProps) {
   return (
     <>
       <TopBar title="Payment Checkout" subtitle="Review cart and settle transaction" />
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <div style={{ width: 340, borderRight: `1px solid ${C.border}`, padding: "24px", overflowY: "auto" }}>
+      <div className="checkout-layout" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <div className="checkout-summary" style={{ width: 340, borderRight: `1px solid ${C.border}`, padding: "24px", overflowY: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, margin: 0 }}>Order #{order.id} Settle</h3>
             <TypeBadge type={order.type} />
@@ -1235,7 +1236,7 @@ function PaymentCheckout({ order, onConfirm, onBack }: CheckoutProps) {
             </div>
           </div>
         </div>
-        <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
+        <div className="checkout-payment" style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
           <h3 style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, margin: "0 0 24px" }}>Settle Payment</h3>
           <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
             {(["cash", "gcash"] as PaymentMethod[]).map((m) => (
@@ -1508,8 +1509,8 @@ function OrderHistory({ orders }: { orders: Order[] }) {
   return (
     <>
       <TopBar title="Order History" subtitle="Lookup and review completed orders" />
-      <div style={{ padding: "20px 32px", flex: 1, overflowY: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+      <div className="history-content" style={{ padding: "20px 32px", flex: 1, overflowY: "auto" }}>
+        <div className="history-filters" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Order ID, table..." style={{ flex: 1, maxWidth: 320, padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 13, outline: "none" }} onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)} onBlur={(e) => (e.currentTarget.style.borderColor = C.border)} />
           <div style={{ display: "flex", marginLeft: "auto" }}>
             {(["all", "completed", "declined"] as const).map((f, i) => (
@@ -1519,7 +1520,7 @@ function OrderHistory({ orders }: { orders: Order[] }) {
             ))}
           </div>
         </div>
-        <div style={{ backgroundColor: C.card, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div className="table-scroll" style={{ backgroundColor: C.card, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ backgroundColor: "#F9F6F2" }}>
@@ -1618,9 +1619,9 @@ function SalesReport({ orders }: { orders: Order[] }) {
   return (
     <>
       <TopBar title="Sales & Performance" subtitle="Real-time analytics and report export" />
-      <div style={{ padding: "20px 32px", flex: 1, overflowY: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, backgroundColor: "white" }}>
+      <div className="report-content" style={{ padding: "20px 32px", flex: 1, overflowY: "auto" }}>
+        <div className="report-toolbar" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <div className="report-dates" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, backgroundColor: "white" }}>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ border: "none", outline: "none", fontSize: 13, fontFamily: "inherit" }} />
             <span style={{ color: C.textMuted }}>–</span>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ border: "none", outline: "none", fontSize: 13, fontFamily: "inherit" }} />
@@ -1635,13 +1636,13 @@ function SalesReport({ orders }: { orders: Order[] }) {
             )}
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+        <div className="report-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
           <StatCard label="TOTAL REVENUE" value={fmt(revenue)} sub={`${transactions} orders in period`} valueColor={C.orange} />
           <StatCard label="TRANSACTIONS" value={`${transactions} Orders`} sub="+8.2% vs last week" />
           <StatCard label="AVERAGE TICKET" value={fmt(avgTicket)} sub="-2.1% vs last week" />
           <StatCard label="TOP PRODUCT CATEGORY" value={topCat || "—"} sub={`${topCatPct}% of overall sales`} valueColor={C.green} large />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div className="report-details" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div style={{ backgroundColor: C.card, borderRadius: 12, border: `1px solid ${C.border}`, padding: "20px 24px" }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, margin: "0 0 20px" }}>Sales Distribution by Category</h3>
             {cats.map((cat) => {
@@ -1759,9 +1760,9 @@ export default function App() {
   if (screen === "login") return <LoginScreen onLogin={() => setScreen("queue")} />;
 
   return (
-    <div style={{ display: "flex", height: "100vh", backgroundColor: C.pageBg, overflow: "hidden" }}>
+    <div className="app-shell" style={{ display: "flex", height: "100vh", backgroundColor: C.pageBg, overflow: "hidden" }}>
       <Sidebar screen={screen} onNav={(s) => setScreen(s)} onLogout={handleLogout} />
-      <main key={screen} className="screen-enter" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <main key={screen} className="app-main screen-enter" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {screen === "queue" && (
           <OrderQueue
             orders={orders}
