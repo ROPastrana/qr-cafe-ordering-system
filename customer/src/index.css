@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #111113;
+  overflow: hidden;
+  height: 100dvh;
+}
+
+@keyframes screenEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.screen-enter {
+  animation: screenEnter 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.screen-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.screen-fade {
+  animation: fadeIn 0.2s ease-out both;
+}
