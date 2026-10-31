@@ -171,7 +171,7 @@ const C = {
 function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: () => void }) {
   return (
     <div
-      className="rounded-2xl flex gap-3 p-3 cursor-pointer active:opacity-75 transition-opacity duration-100"
+      className="menu-item-card rounded-2xl flex gap-3 p-3 cursor-pointer active:opacity-75 transition-opacity duration-100"
       style={{ backgroundColor: C.bgCard, border: `1px solid ${C.border}` }}
       onClick={onAdd}
     >
@@ -250,11 +250,11 @@ function Stepper({ value, onDec, onInc, small }: { value: number; onDec: () => v
 }
 
 // Animated screen wrapper — re-mounts with fresh animation key on each screen change
-function ScreenWrap({ children, animation = "screen-enter" }: { children: React.ReactNode; animation?: string }) {
+function ScreenWrap({ children, animation = "screen-enter", className = "" }: { children: React.ReactNode; animation?: string; className?: string }) {
   return (
     <div
-      className={`flex flex-col ${animation}`}
-      style={{ maxWidth: 390, height: "100dvh", margin: "0 auto", backgroundColor: C.bg, fontFamily: "'Inter', sans-serif", overflow: "hidden" }}
+      className={`app-shell flex flex-col ${animation} ${className}`}
+      style={{ backgroundColor: C.bg, fontFamily: "'Inter', sans-serif", overflow: "hidden" }}
     >
       {children}
     </div>
@@ -358,8 +358,8 @@ export default function App() {
   if (screen === "splash") return (
     <div
       key={screenKey}
-      className="screen-enter"
-      style={{ maxWidth: 390, height: "100dvh", margin: "0 auto", fontFamily: "'Inter', sans-serif", overflow: "hidden", position: "relative", backgroundColor: C.bg }}
+      className="app-shell splash-shell screen-enter"
+      style={{ fontFamily: "'Inter', sans-serif", overflow: "hidden", position: "relative", backgroundColor: C.bg }}
     >
       {/* Full-bleed image */}
       <img
@@ -375,7 +375,7 @@ export default function App() {
       />
 
       {/* Top: logo mark + wordmark */}
-      <div className="absolute top-0 left-0 right-0 flex items-center gap-3 px-6 pt-12">
+      <div className="splash-top absolute top-0 left-0 right-0 flex items-center gap-3 px-6 pt-12">
         {/* SVG logo mark — stylised Q with a coffee steam curl */}
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="18" cy="18" r="18" fill={C.accent} />
@@ -395,7 +395,7 @@ export default function App() {
       </div>
 
       {/* Bottom: headline + CTA */}
-      <div className="absolute bottom-0 left-0 right-0 px-6 pb-12">
+      <div className="splash-content absolute bottom-0 left-0 right-0 px-6 pb-12">
         <p className="text-[11px] font-semibold tracking-[0.18em] uppercase mb-3" style={{ color: C.accent }}>Now serving</p>
         <h1 className="text-[36px] font-extrabold leading-[1.08] mb-4" style={{ color: C.white, letterSpacing: "-0.025em" }}>
           Every cup,<br />crafted with care.
@@ -428,9 +428,9 @@ export default function App() {
   // MENU
   // ═══════════════════════════════════════════════════════════════════════════
   if (screen === "menu") return (
-    <ScreenWrap key={screenKey}>
+    <ScreenWrap key={screenKey} className="menu-shell">
       {/* Header */}
-      <div className="flex-shrink-0 px-4 pt-5 pb-3" style={{ backgroundColor: C.accent }}>
+      <div className="menu-header flex-shrink-0 px-4 pt-5 pb-3" style={{ backgroundColor: C.accent }}>
         <div className="flex items-center gap-2.5 mb-4">
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
               <circle cx="18" cy="18" r="18" fill="rgba(0,0,0,0.2)" />
@@ -461,11 +461,11 @@ export default function App() {
       </div>
 
       {/* Scrollable items */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="menu-scroll flex-1 overflow-y-auto px-4 pb-4">
         {popularItems.length > 0 && (
           <>
             <h2 className="text-[17px] font-bold mt-1 mb-3" style={{ color: C.text }}>Popular Choices</h2>
-            <div className="space-y-3">
+            <div className="menu-card-grid">
               {popularItems.map((item) => <MenuItemCard key={item.id} item={item} onAdd={() => openItem(item)} />)}
             </div>
           </>
@@ -473,7 +473,7 @@ export default function App() {
         {fullItems.length > 0 && (
           <>
             <h2 className="text-[17px] font-bold mt-5 mb-3" style={{ color: C.text }}>{SECTION_LABEL[activeCategory]}</h2>
-            <div className="space-y-3">
+            <div className="menu-card-grid">
               {fullItems.map((item) => <MenuItemCard key={item.id} item={item} onAdd={() => openItem(item)} />)}
             </div>
           </>
@@ -482,7 +482,7 @@ export default function App() {
 
       {/* Bottom cart bar */}
       <div className="flex-shrink-0 px-4 py-3" style={{ borderTop: `1px solid ${C.border}`, backgroundColor: C.bg }}>
-        <div className="flex items-center justify-between">
+        <div className="bottom-bar-inner flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: C.accent }}>
               <span className="text-[12px] font-bold" style={{ color: C.white }}>{cartCount}</span>
@@ -513,15 +513,15 @@ export default function App() {
     return (
       <div
         key={screenKey}
-        className="flex flex-col screen-slide-up"
-        style={{ maxWidth: 390, height: "100dvh", margin: "0 auto", backgroundColor: "#1A1A1C", fontFamily: "'Inter', sans-serif", overflow: "hidden", display: "flex", flexDirection: "column" }}
+        className="app-shell detail-shell flex flex-col screen-slide-up"
+        style={{ backgroundColor: "#1A1A1C", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}
       >
+        <div className="detail-main">
         {/* Hero */}
-        <div className="relative flex-shrink-0" style={{ backgroundColor: C.bgElevated }}>
+        <div className="detail-hero relative flex-shrink-0" style={{ backgroundColor: C.bgElevated }}>
           <img
             src={selectedItem.image} alt={selectedItem.name}
-            className="w-full object-cover rounded-b-[24px]"
-            style={{ height: 240 }}
+            className="detail-image w-full object-cover rounded-b-[24px]"
           />
           <div className="absolute inset-x-0 bottom-0 h-16 rounded-b-[24px]" style={{ background: "linear-gradient(to top, rgba(26,26,28,0.5), transparent)" }} />
           <button
@@ -536,7 +536,7 @@ export default function App() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-4 pt-5">
+        <div className="detail-content flex-1 overflow-y-auto px-4 pt-5">
           <div className="flex items-start justify-between gap-3 mb-2">
             <h1 className="text-[22px] font-bold leading-tight flex-1" style={{ color: C.text }}>{selectedItem.name}</h1>
             <span className="text-[22px] font-bold whitespace-nowrap" style={{ color: C.accent }}>{fmtPrice(unitPrice)}</span>
@@ -581,10 +581,11 @@ export default function App() {
             <Stepper value={qty} onDec={() => setQty(Math.max(1, qty - 1))} onInc={() => setQty(qty + 1)} />
           </div>
         </div>
+        </div>
 
         {/* Bottom bar */}
         <div className="flex-shrink-0 px-4 py-4" style={{ borderTop: `1px solid ${C.border}`, backgroundColor: C.bgCard }}>
-          <div className="flex items-center justify-between">
+          <div className="bottom-bar-inner flex items-center justify-between">
             <div>
               <p className="text-[11px]" style={{ color: C.textSub }}>Cart Subtotal</p>
               <p className="text-[18px] font-bold" style={{ color: C.text }}>{fmtPrice(subtotal)}</p>
@@ -606,7 +607,7 @@ export default function App() {
   // CART
   // ═══════════════════════════════════════════════════════════════════════════
   if (screen === "cart") return (
-    <ScreenWrap key={screenKey}>
+    <ScreenWrap key={screenKey} className="cart-shell">
       <div className="flex-shrink-0 px-4 pt-5 pb-3">
         <button
           onClick={() => goTo("menu")}
@@ -621,7 +622,7 @@ export default function App() {
         <p className="text-[13px] mt-0.5" style={{ color: C.textSub }}>Review and confirm your table order</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4">
+      <div className="cart-content flex-1 overflow-y-auto px-4">
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <p className="text-[15px] font-semibold mb-1" style={{ color: C.text }}>Your cart is empty</p>
@@ -631,7 +632,7 @@ export default function App() {
           </div>
         ) : (
           <>
-            <div className="space-y-3 mb-5">
+            <div className="cart-items-grid mb-5">
               {cart.map((ci) => {
                 const truncated = ci.item.name.length > 18 ? ci.item.name.slice(0, 18) + "..." : ci.item.name;
                 return (
@@ -729,7 +730,7 @@ export default function App() {
   // CONFIRMATION
   // ═══════════════════════════════════════════════════════════════════════════
   if (screen === "confirmation" && placedOrder) return (
-    <ScreenWrap key={screenKey} animation="screen-fade">
+    <ScreenWrap key={screenKey} animation="screen-fade" className="status-shell">
       {/* Header */}
       <div className="flex-shrink-0 px-4 pt-5 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -817,7 +818,7 @@ export default function App() {
   // DECLINED
   // ═══════════════════════════════════════════════════════════════════════════
   if (screen === "declined" && placedOrder) return (
-    <ScreenWrap key={screenKey} animation="screen-fade">
+    <ScreenWrap key={screenKey} animation="screen-fade" className="status-shell">
       {/* Header */}
       <div className="flex-shrink-0 px-4 pt-5 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">

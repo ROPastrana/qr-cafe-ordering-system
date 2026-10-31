@@ -14,6 +14,32 @@ body {
   background-color: #111113;
   overflow: hidden;
   height: 100dvh;
+  margin: 0;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  margin: 0 auto;
+}
+
+.detail-main {
+  display: contents;
+}
+
+.detail-image {
+  height: 240px;
+}
+
+.menu-card-grid,
+.cart-items-grid {
+  display: grid;
+  gap: 0.75rem;
 }
 
 @keyframes screenEnter {
@@ -53,4 +79,152 @@ body {
 
 .screen-fade {
   animation: fadeIn 0.2s ease-out both;
+}
+
+@media (min-width: 768px) {
+  body {
+    background:
+      radial-gradient(circle at 15% 10%, rgba(200, 80, 42, 0.1), transparent 28rem),
+      #09090a;
+  }
+
+  .app-shell {
+    max-width: none;
+  }
+
+  .splash-top,
+  .splash-content {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
+  .splash-content {
+    max-width: 600px;
+    padding-bottom: 4rem;
+  }
+
+  .splash-content h1 {
+    font-size: 3.5rem;
+  }
+
+  .menu-header {
+    padding: 1.5rem 2rem 1rem;
+  }
+
+  .menu-header > * {
+    max-width: 1036px;
+    margin-inline: auto;
+  }
+
+  .menu-scroll {
+    padding: 0.5rem 2rem 1.5rem;
+  }
+
+  .menu-scroll > * {
+    max-width: 1036px;
+    margin-inline: auto;
+  }
+
+  .menu-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .menu-item-card {
+    min-height: 116px;
+    padding: 1rem;
+  }
+
+  .menu-item-card img {
+    width: 88px;
+    height: 88px;
+  }
+
+  .bottom-bar-inner {
+    width: 100%;
+    max-width: 1036px;
+    margin-inline: auto;
+  }
+
+  .detail-main {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.95fr) minmax(400px, 1.05fr);
+    flex: 1;
+    min-height: 0;
+  }
+
+  .detail-hero {
+    min-height: 0;
+  }
+
+  .detail-image {
+    height: 100%;
+    min-height: 100%;
+    border-radius: 0;
+  }
+
+  .detail-hero > div {
+    border-radius: 0;
+  }
+
+  .detail-content {
+    padding: 2.25rem 2rem 1rem;
+  }
+
+  .cart-shell > div:first-child,
+  .cart-content,
+  .cart-shell > div:last-child {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .cart-items-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .status-shell > div {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1100px) {
+  .menu-header {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
+  .menu-header > *,
+  .menu-scroll > *,
+  .bottom-bar-inner {
+    max-width: 1184px;
+  }
+
+  .menu-scroll {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
+  .menu-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .menu-item-card {
+    min-height: 132px;
+  }
+
+  .detail-main {
+    grid-template-columns: minmax(440px, 1.1fr) minmax(460px, 0.9fr);
+  }
+
+  .detail-content {
+    padding: 3rem 3.5rem 1.5rem;
+  }
+
+  .splash-content {
+    padding-left: 4.5rem;
+  }
+
+  .splash-top {
+    padding-left: 4.5rem;
+  }
 }
