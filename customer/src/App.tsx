@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -45,102 +45,6 @@ function fmtPrice(n: number) { return `₱${n}`; }
 function fmtCalc(n: number)  { return `₱${n.toFixed(2)}`; }
 function sizeAdj(s: Size): number { return s === "Small" ? -20 : s === "Large" ? 20 : 0; }
 function itemPrice(item: MenuItem, s: Size): number { return item.hasSize ? item.price + sizeAdj(s) : item.price; }
-
-const MENU: MenuItem[] = [
-  // ── Coffee ──────────────────────────────────────────────────────────────────
-  {
-    id: "c1", name: "Salted Caramel Latte",
-    description: "Espresso with steamed oat milk and housemade sea-salted caramel syrup.",
-    price: 149, image: "https://images.unsplash.com/photo-1495774856032-8b90bbb32b32?w=400&h=400&fit=crop&auto=format",
-    category: "Coffee", popular: true, hasSize: true, hasSugar: true, hasServe: true,
-  },
-  {
-    id: "c2", name: "Spanish Latte",
-    description: "Double shot espresso, sweet condensed milk, and velvety textured fresh milk.",
-    price: 139, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop&auto=format",
-    category: "Coffee", popular: true, hasSize: true, hasSugar: true, hasServe: true,
-  },
-  {
-    id: "c3", name: "Cold Brew Honey Oat",
-    description: "18-hour slow steeped specialty Arabica beans with cold oat milk and wild honey.",
-    price: 159, image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=400&fit=crop&auto=format",
-    category: "Coffee", hasSize: true, hasSugar: true, hasServe: false,
-  },
-  {
-    id: "c4", name: "Classic Cappuccino",
-    description: "A shot of espresso balanced with equal parts steamed milk and a thick cap of warm foam, dusted with cocoa. Served hot only.",
-    price: 129, image: "https://images.unsplash.com/photo-1497636577773-f1231844b336?w=400&h=400&fit=crop&auto=format",
-    category: "Coffee", hasSize: true, hasSugar: true, hasServe: false,
-  },
-  {
-    id: "c5", name: "Velvet Flat White",
-    description: "Two ristretto shots topped with a silky layer of velvety microfoam for a smooth, full-bodied finish.",
-    price: 139, image: "https://images.unsplash.com/photo-1529892485617-25f63cd7b1e9?w=400&h=400&fit=crop&auto=format",
-    category: "Coffee", hasSize: true, hasSugar: true, hasServe: true,
-  },
-  // ── Non-Coffee ───────────────────────────────────────────────────────────────
-  {
-    id: "n1", name: "Uji Matcha Latte",
-    description: "Ceremonial grade Japanese Uji green tea, stone-milled and whisked to a fine foam, then poured over creamy steamed oat milk.",
-    price: 159, image: "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=400&h=400&fit=crop&auto=format",
-    category: "Non-Coffee", popular: true, hasSize: true, hasSugar: true, hasServe: true,
-  },
-  {
-    id: "n2", name: "Hibiscus Berry Iced Tea",
-    description: "Premium brewed hibiscus tea shaken hard with organic strawberry puree and fresh lemon, poured over crushed ice. Served iced only.",
-    price: 139, image: "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=400&h=400&fit=crop&auto=format",
-    category: "Non-Coffee", popular: true, hasSize: true, hasSugar: true, hasServe: false,
-  },
-  {
-    id: "n3", name: "Belgian Hot Chocolate",
-    description: "Steamed fresh milk melted with real dark Belgian chocolate callets for a thick, glossy cup. Served hot only.",
-    price: 149, image: "https://images.unsplash.com/photo-1648192312898-838f9b322f47?w=400&h=400&fit=crop&auto=format",
-    category: "Non-Coffee", hasSize: true, hasSugar: true, hasServe: false,
-  },
-  {
-    id: "n4", name: "Hokkaido Taro Milk Tea",
-    description: "Creamy Hokkaido taro root blended with slow-brewed black tea and slow-cooked brown sugar for a mellow, nutty finish.",
-    price: 129, image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&auto=format",
-    category: "Non-Coffee", hasSize: true, hasSugar: true, hasServe: true,
-  },
-  {
-    id: "n5", name: "Peach Blossom Oolong",
-    description: "Loose-leaf high mountain oolong shaken with organic peach nectar and fresh mint leaves over ice. Served iced only.",
-    price: 119, image: "https://images.unsplash.com/photo-1601390395693-364c0e22031a?w=400&h=400&fit=crop&auto=format",
-    category: "Non-Coffee", hasSize: true, hasSugar: true, hasServe: false,
-  },
-  // ── Pastries ─────────────────────────────────────────────────────────────────
-  {
-    id: "p1", name: "Pistachio Rose Croissant",
-    description: "Flaky twice-baked butter croissant loaded with thick pistachio frangipane, crushed Sicilian pistachios and dried rose petals.",
-    price: 129, image: "https://images.unsplash.com/photo-1623334044303-241021148842?w=400&h=400&fit=crop&auto=format",
-    category: "Pastries", popular: true, hasSize: false, hasSugar: false, hasServe: false,
-  },
-  {
-    id: "p2", name: "Pain au Chocolat",
-    description: "Classic French pastry of butter-laminated dough folded around two batons of dark chocolate, baked to a deep golden crust.",
-    price: 99, image: "https://images.unsplash.com/photo-1773894470970-2908e13f3940?w=400&h=400&fit=crop&auto=format",
-    category: "Pastries", popular: true, hasSize: false, hasSugar: false, hasServe: false,
-  },
-  {
-    id: "p3", name: "Blueberry Cream Cheese Danish",
-    description: "Crisp puff pastry nest filled with sweet blueberry compote and whipped cream cheese, finished with a vanilla glaze.",
-    price: 119, image: "https://images.unsplash.com/photo-1702742322469-36315505728f?w=400&h=400&fit=crop&auto=format",
-    category: "Pastries", hasSize: false, hasSugar: false, hasServe: false,
-  },
-  {
-    id: "p4", name: "Salted Caramel Pecan Bun",
-    description: "Soft cinnamon yeast roll topped with warm salted caramel and roasted pecans, baked fresh every morning.",
-    price: 109, image: "https://images.unsplash.com/photo-1583527976767-5399024eeb05?w=400&h=400&fit=crop&auto=format",
-    category: "Pastries", hasSize: false, hasSugar: false, hasServe: false,
-  },
-  {
-    id: "p5", name: "Basque Burnt Cheesecake",
-    description: "Deeply caramelized crustless cheesecake with a custardy, semi-liquid centre. Best paired with a black coffee.",
-    price: 159, image: "https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=400&h=400&fit=crop&auto=format",
-    category: "Pastries", hasSize: false, hasSugar: false, hasServe: false,
-  },
-];
 
 const SIZES: Size[]       = ["Small", "Medium", "Large"];
 const SUGAR_LEVELS: SugarLevel[] = ["0%", "25%", "50%", "75%", "100%"];
@@ -269,6 +173,27 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState<Category>("Coffee");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
+  // Menu from the API
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [menuLoading, setMenuLoading] = useState(true);
+  const [menuError, setMenuError] = useState("");
+
+  useEffect(() => {
+    fetch("/cafe/api/menu.php")
+      .then((res) => {
+        if (!res.ok) throw new Error("Bad response");
+        return res.json();
+      })
+      .then((data: MenuItem[]) => {
+        setMenu(data);
+        setMenuLoading(false);
+      })
+      .catch(() => {
+        setMenuError("We couldn't load the menu. Please ask the staff for help.");
+        setMenuLoading(false);
+      });
+  }, []);
+
   // Item detail
   const [size, setSize] = useState<Size>("Medium");
   const [sugarLevel, setSugarLevel] = useState<SugarLevel>("50%");
@@ -287,7 +212,7 @@ export default function App() {
     setScreenKey((k) => k + 1);
   }
 
-  const filteredItems = MENU.filter((m) => m.category === activeCategory);
+  const filteredItems = menu.filter((m) => m.category === activeCategory);
   const popularItems  = filteredItems.filter((m) => m.popular);
   const fullItems     = filteredItems.filter((m) => !m.popular);
 
@@ -465,6 +390,12 @@ export default function App() {
 
       {/* Scrollable items */}
       <div className="menu-scroll flex-1 overflow-y-auto px-4 pb-4">
+        {menuLoading && (
+          <p className="text-[14px] py-10 text-center" style={{ color: C.textSub }}>Loading menu...</p>
+        )}
+        {menuError && (
+          <p className="text-[14px] py-10 text-center" style={{ color: C.accent }}>{menuError}</p>
+        )}
         {popularItems.length > 0 && (
           <>
             <h2 className="text-[17px] font-bold mt-1 mb-3" style={{ color: C.text }}>Popular Choices</h2>
@@ -480,6 +411,9 @@ export default function App() {
               {fullItems.map((item) => <MenuItemCard key={item.id} item={item} onAdd={() => openItem(item)} />)}
             </div>
           </>
+        )}
+        {!menuLoading && !menuError && filteredItems.length === 0 && (
+          <p className="py-8 text-center text-[14px]" style={{ color: C.textSub }}>No items available in this category.</p>
         )}
       </div>
 
