@@ -205,6 +205,8 @@ export default function App() {
   const [orderType, setOrderType] = useState<"Dine In" | "Take Out">("Dine In");
   const [customerName, setCustomerName] = useState("");
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
+  const [placing, setPlacing] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
   // Trigger re-animation on every screen transition
   function goTo(s: Screen) {
@@ -250,19 +252,54 @@ export default function App() {
     setCart((p) => p.filter((ci) => ci.cartId !== cartId));
   }
 
-  function submitOrder(declined = false) {
-    const order: PlacedOrder = {
-      orderNum: String(Math.floor(100 + Math.random() * 900)),
+  async function submitOrder(declined = false) {
+    const base = {
       name: customerName.trim(),
       orderType,
       items: [...cart],
       subtotal: cartSubtotal,
       total: cartTotal,
     };
-    setPlacedOrder(order);
-    setCart([]);
-    setCustomerName("");
-    goTo(declined ? "declined" : "confirmation");
+
+    // The demo "declined" button stays local, so it never touches the database
+    if (declined) {
+      setPlacedOrder({ orderNum: String(Math.floor(100 + Math.random() * 900)), ...base });
+      setCart([]);
+      setCustomerName("");
+      goTo("declined");
+      return;
+    }
+
+    setPlacing(true);
+    setOrderError("");
+    try {
+      const res = await fetch("/cafe/api/orders.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: base.name,
+          orderType,
+          items: cart.map((ci) => ({
+            itemId: ci.item.id,
+            size: ci.size,
+            sugarLevel: ci.sugarLevel,
+            serve: ci.serve,
+            qty: ci.qty,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Order failed");
+
+      setPlacedOrder({ ...base, orderNum: data.orderCode, subtotal: data.total, total: data.total });
+      setCart([]);
+      setCustomerName("");
+      goTo("confirmation");
+    } catch (e) {
+      setOrderError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+    } finally {
+      setPlacing(false);
+    }
   }
 
   function getItemPrice(ci: CartItem) { return itemPrice(ci.item, ci.size); }
@@ -275,7 +312,7 @@ export default function App() {
     return parts.length > 0 ? parts.join(" • ") : "Warmed";
   }
 
-  const canPlace = customerName.trim().length > 0 && cart.length > 0;
+  const canPlace = customerName.trim().length > 0 && cart.length > 0 && !placing;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SPLASH
@@ -639,6 +676,9 @@ export default function App() {
 
       {cart.length > 0 && (
         <div className="flex-shrink-0 px-4 pb-6 pt-3 space-y-2" style={{ borderTop: `1px solid ${C.border}`, backgroundColor: C.bg }}>
+          {orderError && (
+            <p className="text-[13px] text-center" style={{ color: C.accent }}>{orderError}</p>
+          )}
           <button
             onClick={() => submitOrder(false)}
             disabled={!canPlace}
