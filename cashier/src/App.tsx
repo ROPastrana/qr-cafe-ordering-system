@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type {
   Screen, Order, OrderStatus, FulfillmentType, DeclineReason,
   PaymentMethod, MenuCategory, CartEntry, MenuItem,
   DrinkSize, SugarLevel, DrinkTemp, DiscountType,
 } from "./types";
-import { MENU_ITEMS, fmt, timeAgo, fmtTime, SIZE_ADJUSTMENTS } from "./data";
+import { fmt, timeAgo, fmtTime, SIZE_ADJUSTMENTS } from "./data";
 
 interface PaymentInput {
   method: PaymentMethod;
@@ -1061,6 +1061,7 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
 
 // ── Manual Entry Screen ───────────────────────────────────────────────────────
 interface ManualEntryProps {
+  menu: MenuItem[];
   cart: CartEntry[];
   customerName: string;
   fulfillment: FulfillmentType;
@@ -1070,12 +1071,12 @@ interface ManualEntryProps {
   onSetFulfillment: (f: FulfillmentType) => void;
   onPayNow: (discountType?: DiscountType) => void;
 }
-function ManualEntry({ cart, customerName, fulfillment, onAddItem, onUpdateQty, onSetCustomerName, onSetFulfillment, onPayNow }: ManualEntryProps) {
+function ManualEntry({ menu, cart, customerName, fulfillment, onAddItem, onUpdateQty, onSetCustomerName, onSetFulfillment, onPayNow }: ManualEntryProps) {
   const [category, setCategory] = useState<MenuCategory>("Coffee");
   const [modalItem, setModalItem] = useState<MenuItem | null>(null);
   const [discountType, setDiscountType] = useState<DiscountType | null>(null);
   const cats: MenuCategory[] = ["Coffee", "Non-Coffee", "Pastries"];
-  const filtered = MENU_ITEMS.filter((m) => m.category === category);
+  const filtered = menu.filter((m) => m.category === category);
 
   const cartTotalQty = (itemId: number) => cart.filter((e) => e.item.id === itemId).reduce((s, e) => s + e.qty, 0);
   const subtotal = cart.reduce((s, e) => s + e.effectivePrice * e.qty, 0);
@@ -1225,7 +1226,7 @@ function ManualEntry({ cart, customerName, fulfillment, onAddItem, onUpdateQty, 
 const qtyBtnStyle: React.CSSProperties = { width: 26, height: 26, borderRadius: 6, border: `1px solid ${C.border}`, backgroundColor: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
 
 // ── Payment Checkout Screen ───────────────────────────────────────────────────
-interface CheckoutProps { order: Order; onConfirm: (method: PaymentMethod) => void; onBack: () => void; }
+interface CheckoutProps { order: Order; onConfirm: (payment: PaymentInput) => void; onBack: () => void; }
 function PaymentCheckout({ order, onConfirm, onBack }: CheckoutProps) {
   const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
   const [cashInput, setCashInput] = useState("");
@@ -1233,6 +1234,9 @@ function PaymentCheckout({ order, onConfirm, onBack }: CheckoutProps) {
   const [receipt, setReceipt] = useState<{ method: PaymentMethod; cashTendered: number; cashChange: number; gcashRef: string } | null>(null);
   const cashAmount = parseFloat(cashInput.replace(/[^\d.]/g, "")) || 0;
   const change = cashAmount - order.total;
+  const canPay = payMethod === "cash"
+    ? order.total > 0 && cashAmount >= order.total
+    : /^[0-9]{10,13}$/.test(gcashRef.trim());
   return (
     <>
       <TopBar title="Payment Checkout" subtitle="Review cart and settle transaction" />
@@ -1340,7 +1344,12 @@ function PaymentCheckout({ order, onConfirm, onBack }: CheckoutProps) {
             >
               E-Receipt
             </button>
-            <button className="btn-press" onClick={() => onConfirm(payMethod)} style={{ flex: 2, padding: "14px", borderRadius: 12, border: "none", backgroundColor: C.green, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            <button
+              className="btn-press"
+              disabled={!canPay}
+              onClick={() => onConfirm({ method: payMethod, discountType: order.discountType ?? null, cashTendered: cashAmount, gcashRef: gcashRef.trim() })}
+              style={{ flex: 2, padding: "14px", borderRadius: 12, border: "none", backgroundColor: C.green, color: "white", fontSize: 14, fontWeight: 700, cursor: canPay ? "pointer" : "not-allowed", opacity: canPay ? 1 : 0.45 }}
+            >
               Confirm Payment &amp; Complete
             </button>
           </div>
@@ -1604,7 +1613,7 @@ function OrderHistory({ orders }: { orders: Order[] }) {
 }
 
 // ── Sales Report Screen ───────────────────────────────────────────────────────
-function SalesReport({ orders }: { orders: Order[] }) {
+function SalesReport({ orders, menu }: { orders: Order[]; menu: MenuItem[] }) {
   const today = new Date();
   const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState(today.toISOString().split("T")[0]);
@@ -1621,7 +1630,7 @@ function SalesReport({ orders }: { orders: Order[] }) {
   const itemRevenue: Record<string, { units: number; revenue: number }> = {};
   inRange.forEach((o) => {
     o.items.forEach((item) => {
-      const cat = MENU_ITEMS.find((m) => m.name === item.name)?.category ?? "Other";
+      const cat = menu.find((m) => m.name === item.name)?.category ?? "Other";
       catRevenue[cat] = (catRevenue[cat] ?? 0) + item.unitPrice * item.qty;
       if (!itemRevenue[item.name]) itemRevenue[item.name] = { units: 0, revenue: 0 };
       itemRevenue[item.name].units += item.qty;
@@ -1742,12 +1751,27 @@ function parseOrder(o: any): Order {
   };
 }
 
+function parseMenuItem(m: any): MenuItem {
+  return {
+    id: Number(m.id),
+    name: m.name,
+    description: m.description,
+    category: m.category,
+    price: m.price,
+    image: m.image,
+    isDrink: m.hasSize || m.hasSugar || m.hasServe,
+    tempOptions: m.hasServe ? "both" : m.fixedTemp === "Cold" ? "cold-only" : "hot-only",
+  };
+}
+
 // ── Root App ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState<Screen>("login");
   const [cashierName, setCashierName] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const savingRef = useRef(false);
   const [offline, setOffline] = useState(false); 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [declineTargetId, setDeclineTargetId] = useState<number | null>(null);
@@ -1774,6 +1798,13 @@ export default function App() {
       })
       .catch(() => {})
       .finally(() => setCheckingSession(false));
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API}/menu.php`)
+      .then((r) => r.json())
+      .then((d) => setMenu(d.map(parseMenuItem)))
+      .catch(() => {});
   }, []);
 
   const loadOrders = useCallback(async () => {
@@ -1869,13 +1900,34 @@ export default function App() {
     setCheckoutOrder(order);
     setScreen("checkout");
   };
-  const handleCheckoutConfirm = (method: PaymentMethod) => {
-    if (!checkoutOrder) return;
-    // Payment done — send straight into Preparing, not Completed
-    const preparing: Order = { ...checkoutOrder, status: "preparing", paymentMethod: method };
-    setOrders((prev) => [preparing, ...prev]);
-    setCart([]); setCustomerName(""); setCheckoutOrder(null);
-    setScreen("queue");
+  const handleCheckoutConfirm = async (payment: PaymentInput) => {
+    if (!checkoutOrder || savingRef.current) return;
+    savingRef.current = true;
+    try {
+      const res = await fetch(`${API}/walkin.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: customerName.trim(),
+          orderType: fulfillment,
+          items: cart.map((e) => ({ itemId: e.item.id, size: e.size, sugarLevel: e.sugarLevel, serve: e.temp, qty: e.qty })),
+          ...payment,
+        }),
+      });
+      if (res.status === 401) { signOutLocally(); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || "Could not save the order."); return; }
+      setCart([]);
+      setCustomerName("");
+      setCheckoutOrder(null);
+      setScreen("queue");
+    } catch {
+      alert("Can't reach the server. Check that Apache and MySQL are running.");
+      return;
+    } finally {
+      savingRef.current = false;
+    }
+    await loadOrders();
   };
   const handleLogout = async () => {
     try { await fetch(`${API}/logout.php`, { method: "POST" }); } catch {}
@@ -1909,6 +1961,7 @@ export default function App() {
         )}
         {screen === "manual" && (
           <ManualEntry
+            menu={menu}
             cart={cart}
             customerName={customerName}
             fulfillment={fulfillment}
@@ -1923,7 +1976,7 @@ export default function App() {
           <PaymentCheckout order={checkoutOrder} onConfirm={handleCheckoutConfirm} onBack={() => setScreen("manual")} />
         )}
         {screen === "history" && <OrderHistory orders={orders} />}
-        {screen === "report" && <SalesReport orders={orders} />}
+        {screen === "report" && <SalesReport orders={orders} menu={menu} />}
       </main>
 
       {declineTargetId !== null && (

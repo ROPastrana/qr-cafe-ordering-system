@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 require 'db.php';
 
 $sql = "SELECT m.item_id, m.item_name, m.description, m.base_price, m.image_url,
-               m.is_popular, m.has_size, m.has_sugar, m.has_serve,
+               m.is_popular, m.has_size, m.has_sugar, m.has_serve, m.fixed_temp,
                c.category_name
         FROM tbl_menu_items m
         JOIN tbl_categories c ON c.category_id = m.category_id
@@ -23,6 +23,7 @@ $menu = array_map(fn($r) => [
     'hasSize'     => (bool) $r['has_size'],
     'hasSugar'    => (bool) $r['has_sugar'],
     'hasServe'    => (bool) $r['has_serve'],
+    'fixedTemp'   => $r['fixed_temp'],
 ], $rows);
 
 echo json_encode($menu);

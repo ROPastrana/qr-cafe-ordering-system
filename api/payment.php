@@ -1,11 +1,6 @@
 <?php
+require_once __DIR__ . '/errors.php';
 const DISCOUNT_RATE = 0.20;
-
-class PayException extends Exception {
-    public function __construct(public int $status, string $message) {
-        parent::__construct($message);
-    }
-}
 
 function settle_payment(PDO $pdo, int $orderId, int $cashierId, array $in): array {
     $method = $in['method'] ?? '';
@@ -19,7 +14,8 @@ function settle_payment(PDO $pdo, int $orderId, int $cashierId, array $in): arra
         throw new PayException(400, 'Invalid discount');
     }
 
-    $pdo->beginTransaction();
+    $own = !$pdo->inTransaction();   // walkin.php opens its own transaction
+    if ($own) $pdo->beginTransaction();
     try {
         // Lock the order row so two cashiers can't settle it at the same time
         $o = $pdo->prepare("SELECT order_id, order_code, order_status FROM tbl_orders WHERE order_id = ? FOR UPDATE");
@@ -81,9 +77,9 @@ function settle_payment(PDO $pdo, int $orderId, int $cashierId, array $in): arra
         )->execute([$cashierId, $discountKey ? $discountMap[$discountKey] : 'none',
                     $discount, $subtotal, $total, $orderId]);
 
-        $pdo->commit();
+        if ($own) $pdo->commit();
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($own && $pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
 
