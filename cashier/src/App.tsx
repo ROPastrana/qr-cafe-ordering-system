@@ -4,7 +4,7 @@ import type {
   PaymentMethod, MenuCategory, CartEntry, MenuItem,
   DrinkSize, SugarLevel, DrinkTemp, DiscountType,
 } from "./types";
-import { SEED_ORDERS, MENU_ITEMS, fmt, timeAgo, fmtTime, SIZE_ADJUSTMENTS } from "./data";
+import { MENU_ITEMS, fmt, timeAgo, fmtTime, SIZE_ADJUSTMENTS } from "./data";
 
 // ── Color tokens ──────────────────────────────────────────────────────────────
 const C = {
@@ -1692,10 +1692,26 @@ function StatCard({ label, value, sub, valueColor, large }: { label: string; val
   );
 }
 
+const API = "/cafe/api";
+
+// The API sends dates as text, but the screens expect Date objects
+function parseOrder(o: any): Order {
+  return {
+    ...o,
+    createdAt: new Date(o.createdAt),
+    completedAt: o.completedAt ? new Date(o.completedAt) : undefined,
+    declineReason: o.declineReason ?? undefined,
+    declineNote: o.declineNote ?? undefined,
+    paymentMethod: o.paymentMethod ?? undefined,
+    items: o.items.map((i: any) => ({ ...i, variant: i.variant ?? undefined })),
+  };
+}
+
 // ── Root App ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState<Screen>("login");
-  const [orders, setOrders] = useState<Order[]>(SEED_ORDERS);
+ const [orders, setOrders] = useState<Order[]>([]);
+  const [offline, setOffline] = useState(false); 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [declineTargetId, setDeclineTargetId] = useState<number | null>(null);
   const [cart, setCart] = useState<CartEntry[]>([]);
@@ -1703,32 +1719,64 @@ export default function App() {
   const [fulfillment, setFulfillment] = useState<FulfillmentType>("Dine In");
   const [checkoutOrder, setCheckoutOrder] = useState<Order | null>(null);
 
-  const updateOrder = useCallback((id: number, patch: Partial<Order>) => {
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+  const loadOrders = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/queue.php`);
+      if (!res.ok) throw new Error("bad response");
+      const data = await res.json();
+      setOrders(data.map(parseOrder));
+      setOffline(false);
+    } catch {
+      setOffline(true);
+    }
   }, []);
+
+  // Poll the server every 3 seconds once the cashier is signed in
+  const loggedIn = screen !== "login";
+  useEffect(() => {
+    if (!loggedIn) return;
+    loadOrders();
+    const timer = setInterval(loadOrders, 3000);
+    return () => clearInterval(timer);
+  }, [loggedIn, loadOrders]);
+
+  async function changeStatus(id: number, status: OrderStatus, extra: Record<string, unknown> = {}) {
+    try {
+      const res = await fetch(`${API}/status.php`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status, ...extra }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Could not update the order.");
+      }
+    } catch {
+      alert("Can't reach the server. Check that Apache and MySQL are running.");
+    }
+    await loadOrders();
+  }
 
   // Accept on a QR/website order → open workspace to review and settle payment first
   const handleAccept = (id: number) => {
     setSelectedOrderId(id);
     setScreen("workspace");
   };
-  const handleMarkReady = (id: number) => updateOrder(id, { status: "ready" });
+  const handleMarkReady = (id: number) => changeStatus(id, "ready");
   const handleDeclineClick = (id: number) => setDeclineTargetId(id);
-  const handleConfirmDecline = (id: number, reason: DeclineReason, note: string) => {
-    updateOrder(id, { status: "declined", declineReason: reason, declineNote: note || undefined });
+  const handleConfirmDecline = async (id: number, reason: DeclineReason, note: string) => {
+    await changeStatus(id, "declined", { reason, note });
     setDeclineTargetId(null);
   };
 
-  // Payment confirmed in workspace → move to Preparing (payment settled, kitchen starts work)
-  const handleCompletePayment = (id: number, method: PaymentMethod) => {
-    updateOrder(id, { status: "preparing", paymentMethod: method });
+  // TEMPORARY: the real payment endpoint replaces this after the login step
+  const handleCompletePayment = async (id: number, _method: PaymentMethod) => {
+    await changeStatus(id, "preparing");
     setScreen("queue");
   };
 
   // "Complete Order" on Ready card → order is already paid, directly complete
-  const handleCompleteReady = (id: number) => {
-    updateOrder(id, { status: "completed", completedAt: new Date() });
-  };
+  const handleCompleteReady = (id: number) => changeStatus(id, "completed");
 
   const handleAddItem = (entry: CartEntry) => {
     setCart((prev) => {
@@ -1806,6 +1854,11 @@ export default function App() {
           onCancel={() => setDeclineTargetId(null)}
           onConfirm={handleConfirmDecline}
         />
+      )}
+      {offline && (
+        <div style={{ position: "fixed", bottom: 16, right: 16, padding: "10px 16px", borderRadius: 10, backgroundColor: "#7B2D0F", color: "white", fontSize: 13, fontWeight: 600, zIndex: 2000 }}>
+          Can't reach the server. Retrying...
+        </div>
       )}
     </div>
   );
