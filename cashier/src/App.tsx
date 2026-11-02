@@ -149,8 +149,8 @@ const QrCodeSvg = ({ size = 140 }: { size?: number }) => (
 );
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-interface SidebarProps { screen: Screen; onNav: (s: Screen) => void; onLogout: () => void; }
-function Sidebar({ screen, onNav, onLogout }: SidebarProps) {
+interface SidebarProps { screen: Screen; onNav: (s: Screen) => void; onLogout: () => void; name: string; }
+function Sidebar({ screen, onNav, onLogout, name }: SidebarProps) {
   const navItems: { id: Screen; label: string; icon: React.ReactNode }[] = [
     { id: "queue", label: "Order Queue", icon: <IconQueue /> },
     { id: "manual", label: "Manual Entry", icon: <IconPlus /> },
@@ -202,7 +202,7 @@ function Sidebar({ screen, onNav, onLogout }: SidebarProps) {
             </svg>
           </div>
           <div>
-            <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>Juan D.</div>
+            <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>{name}</div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Station 1 · Cashier</div>
           </div>
         </div>
@@ -657,14 +657,28 @@ function EReceiptModal({ order, discountType, discountAmount, finalTotal, paymen
 }
 
 // ── Login Screen ──────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [username, setUsername] = useState("Ordering System_cashier01");
-  const [password, setPassword] = useState("••••••••••••");
+function LoginScreen({ onLogin }: { onLogin: (name: string) => void }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(onLogin, 600);
+    setError("");
+    try {
+      const res = await fetch("/cafe/api/login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Sign in failed");
+      onLogin(data.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Can't reach the server.");
+      setLoading(false);
+    }
   };
   return (
     <div className="login-screen" style={{ minHeight: "100vh", backgroundColor: C.pageBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -693,6 +707,9 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 8 }}>Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 14, outline: "none", boxSizing: "border-box" }} onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)} onBlur={(e) => (e.currentTarget.style.borderColor = C.border)} />
             </div>
+            {error && (
+              <p style={{ color: "#B00020", fontSize: 13, fontWeight: 600, margin: "-18px 0 18px" }}>{error}</p>
+            )}
             <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", borderRadius: 10, border: "none", backgroundColor: C.orange, color: "white", fontSize: 15, fontWeight: 600, cursor: "pointer", opacity: loading ? 0.7 : 1 }}>
               {loading ? "Signing in…" : "Sign In to POS"}
             </button>
@@ -1710,7 +1727,9 @@ function parseOrder(o: any): Order {
 // ── Root App ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState<Screen>("login");
- const [orders, setOrders] = useState<Order[]>([]);
+  const [cashierName, setCashierName] = useState("");
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [offline, setOffline] = useState(false); 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [declineTargetId, setDeclineTargetId] = useState<number | null>(null);
@@ -1719,9 +1738,30 @@ export default function App() {
   const [fulfillment, setFulfillment] = useState<FulfillmentType>("Dine In");
   const [checkoutOrder, setCheckoutOrder] = useState<Order | null>(null);
 
+  const signOutLocally = useCallback(() => {
+    setCashierName("");
+    setSelectedOrderId(null);
+    setScreen("login");
+  }, []);
+
+  // Restore the session after a page reload
+  useEffect(() => {
+    fetch(`${API}/me.php`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setCashierName(data.name);
+          setScreen("queue");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCheckingSession(false));
+  }, []);
+
   const loadOrders = useCallback(async () => {
     try {
       const res = await fetch(`${API}/queue.php`);
+      if (res.status === 401) { signOutLocally(); return; }
       if (!res.ok) throw new Error("bad response");
       const data = await res.json();
       setOrders(data.map(parseOrder));
@@ -1729,7 +1769,7 @@ export default function App() {
     } catch {
       setOffline(true);
     }
-  }, []);
+  }, [signOutLocally]);
 
   // Poll the server every 3 seconds once the cashier is signed in
   const loggedIn = screen !== "login";
@@ -1747,6 +1787,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status, ...extra }),
       });
+      if (res.status === 401) { signOutLocally(); return; }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         alert(data.error || "Could not update the order.");
@@ -1803,13 +1844,17 @@ export default function App() {
     setCart([]); setCustomerName(""); setCheckoutOrder(null);
     setScreen("queue");
   };
-  const handleLogout = () => { setScreen("login"); setSelectedOrderId(null); };
+  const handleLogout = async () => {
+    try { await fetch(`${API}/logout.php`, { method: "POST" }); } catch {}
+    signOutLocally();
+  };
 
-  if (screen === "login") return <LoginScreen onLogin={() => setScreen("queue")} />;
+  if (checkingSession) return null;
+  if (screen === "login") return <LoginScreen onLogin={(name) => { setCashierName(name); setScreen("queue"); }} />;
 
   return (
     <div className="app-shell" style={{ display: "flex", height: "100vh", backgroundColor: C.pageBg, overflow: "hidden" }}>
-      <Sidebar screen={screen} onNav={(s) => setScreen(s)} onLogout={handleLogout} />
+      <Sidebar screen={screen} onNav={(s) => setScreen(s)} onLogout={handleLogout} name={cashierName} />
       <main key={screen} className="app-main screen-enter" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {screen === "queue" && (
           <OrderQueue

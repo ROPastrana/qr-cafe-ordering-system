@@ -1,5 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+require 'auth.php';
+require_cashier();
 require 'db.php';
 
 function fail(int $code, string $msg) {
