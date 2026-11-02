@@ -19,6 +19,7 @@ export type DiscountType = "PWD" | "Senior Citizen" | "Student";
 
 export interface Order {
   id: number;
+  code?: string;
   customer: string;
   type: FulfillmentType;
   items: OrderItem[];

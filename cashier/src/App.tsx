@@ -6,6 +6,13 @@ import type {
 } from "./types";
 import { MENU_ITEMS, fmt, timeAgo, fmtTime, SIZE_ADJUSTMENTS } from "./data";
 
+interface PaymentInput {
+  method: PaymentMethod;
+  discountType: DiscountType | null;
+  cashTendered: number;
+  gcashRef: string;
+}
+
 // ── Color tokens ──────────────────────────────────────────────────────────────
 const C = {
   sidebar: "#2B1810",
@@ -802,7 +809,7 @@ function QueueCard({ order, onAccept, onMarkReady, onCompleteReady, onDecline, o
     <div className="queue-card" style={{ backgroundColor: C.card, borderRadius: 12, padding: "14px", border: isReady ? `2px solid ${C.green}` : `1px solid ${C.border}` }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>#{order.id}</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>#{order.code ?? order.id}</span>
         <TypeBadge type={order.type} />
         {order.status === "declined" && (
           <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, backgroundColor: "#FFE8E8", color: "#B00020" }}>Declined</span>
@@ -855,7 +862,7 @@ interface WorkspaceProps {
   orders: Order[];
   selectedId: number | null;
   onSelectOrder: (id: number) => void;
-  onCompletePayment: (id: number, method: PaymentMethod) => void;
+  onCompletePayment: (id: number, payment: PaymentInput) => void;
 }
 function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }: WorkspaceProps) {
   // Workspace only handles new (QR) orders pending acceptance + payment
@@ -867,11 +874,21 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
   const [discountType, setDiscountType] = useState<DiscountType | null>(null);
   const [receipt, setReceipt] = useState<{ discountType: DiscountType | null; discountAmt: number; finalTotal: number; method: PaymentMethod; cashTendered: number; cashChange: number; gcashRef: string } | null>(null);
 
+  useEffect(() => {
+    setDiscountType(null);
+    setCashInput("");
+    setGcashRef("");
+    setPayMethod("cash");
+  }, [order?.id]);
+
   const baseTotal = order?.total ?? 0;
   const discountAmt = discountType ? Math.round(baseTotal * DISCOUNT_RATE * 100) / 100 : 0;
   const finalTotal = baseTotal - discountAmt;
   const cashAmount = parseFloat(cashInput.replace(/[^\d.]/g, "")) || 0;
   const change = cashAmount - finalTotal;
+  const canPay = payMethod === "cash"
+    ? finalTotal > 0 && cashAmount >= finalTotal
+    : /^[0-9]{10,13}$/.test(gcashRef.trim());
 
   return (
     <>
@@ -889,7 +906,7 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
               style={{ padding: "12px 14px", borderRadius: 10, marginBottom: 8, cursor: "pointer", border: o.id === (order?.id ?? -1) ? `2px solid ${C.orange}` : `1px solid ${C.border}`, backgroundColor: o.id === (order?.id ?? -1) ? "#FFF8F5" : C.card }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontWeight: 700, fontSize: 14, color: C.textPrimary }}>Order #{o.id}</span>
+                <span style={{ fontWeight: 700, fontSize: 14, color: C.textPrimary }}>Order #{o.code ?? o.id}</span>
                 <TypeBadge type={o.type} />
               </div>
               <p style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, margin: "0 0 2px" }}>{o.customer}</p>
@@ -909,7 +926,7 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
           <div className="workspace-detail" style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, margin: 0 }}>Order #{order.id}</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, margin: 0 }}>Order #{order.code ?? order.id}</h2>
                 <TypeBadge type={order.type} />
               </div>
               <span style={{ fontSize: 13, fontWeight: 600, padding: "6px 14px", borderRadius: 8, backgroundColor: C.greenLight, color: C.green }}>
@@ -1015,8 +1032,9 @@ function OrderWorkspace({ orders, selectedId, onSelectOrder, onCompletePayment }
               </button>
               <button
                 className="btn-press"
-                onClick={() => onCompletePayment(order.id, payMethod)}
-                style={{ flex: 2, padding: "12px", borderRadius: 10, border: "none", backgroundColor: C.green, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                disabled={!canPay}
+                onClick={() => onCompletePayment(order.id, { method: payMethod, discountType, cashTendered: cashAmount, gcashRef: gcashRef.trim() })}
+                style={{ flex: 2, padding: "12px", borderRadius: 10, border: "none", backgroundColor: C.green, color: "white", fontSize: 14, fontWeight: 700, cursor: canPay ? "pointer" : "not-allowed", opacity: canPay ? 1 : 0.45 }}
               >
                 {payMethod === "cash" ? "Mark as Paid & Preparing" : "Confirm Payment Received & Preparing"}
               </button>
@@ -1359,7 +1377,7 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
         <div style={{ padding: "22px 28px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: C.textPrimary, margin: 0 }}>Order #{order.id}</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: C.textPrimary, margin: 0 }}>Order #{order.code ?? order.id}</h2>
               <TypeBadge type={order.type} />
               <StatusPill status={order.status} />
             </div>
@@ -1460,7 +1478,7 @@ function DeclineReasonModal({ order, onClose }: { order: Order; onClose: () => v
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 18, fontWeight: 800, color: C.textPrimary }}>Order #{order.id} — Declined</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: C.textPrimary }}>Order #{order.code ?? order.id} — Declined</span>
               </div>
               <p style={{ fontSize: 13, color: C.textSecondary, margin: 0 }}>
                 {order.customer} · {order.type} · {fmtTime(order.createdAt)}
@@ -1552,7 +1570,7 @@ function OrderHistory({ orders }: { orders: Order[] }) {
                   onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#FFF8F5")}
                   onMouseOut={(e) => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "white" : "#FAFAFA")}
                 >
-                  <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, color: C.textPrimary }}>#{order.id}</td>
+                  <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, color: C.textPrimary }}>#{order.code ?? order.id}</td>
                   <td style={{ padding: "14px 16px", fontSize: 13, color: C.textSecondary }}>{fmtTime(order.createdAt)}</td>
                   <td style={{ padding: "14px 16px", fontSize: 13, color: C.textSecondary }}>{order.type}</td>
                   <td style={{ padding: "14px 16px", fontSize: 13, color: C.textSecondary, maxWidth: 240 }}>
@@ -1810,10 +1828,25 @@ export default function App() {
     setDeclineTargetId(null);
   };
 
-  // TEMPORARY: the real payment endpoint replaces this after the login step
-  const handleCompletePayment = async (id: number, _method: PaymentMethod) => {
-    await changeStatus(id, "preparing");
-    setScreen("queue");
+  const handleCompletePayment = async (id: number, payment: PaymentInput) => {
+    try {
+      const res = await fetch(`${API}/pay.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id, ...payment }),
+      });
+      if (res.status === 401) { signOutLocally(); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "Payment failed.");
+        await loadOrders();
+        return;
+      }
+      setScreen("queue");
+    } catch {
+      alert("Can't reach the server. Check that Apache and MySQL are running.");
+    }
+    await loadOrders();
   };
 
   // "Complete Order" on Ready card → order is already paid, directly complete

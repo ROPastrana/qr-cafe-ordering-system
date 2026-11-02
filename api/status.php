@@ -20,7 +20,6 @@ if (!$id) fail(400, 'Missing order id');
 
 // target (cashier screen name) => [database status, status the order must be in now]
 $moves = [
-    'preparing' => ['preparing', 'pending'],   // TEMPORARY: moves to the payment endpoint later
     'ready'     => ['ready',     'preparing'],
     'completed' => ['completed', 'ready'],
     'declined'  => ['declined',  'pending'],
