@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 01, 2026 at 11:34 AM
+-- Generation Time: Nov 02, 2026 at 07:41 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -135,6 +135,7 @@ CREATE TABLE `tbl_orders` (
   `service_type` enum('dine_in','take_out') NOT NULL DEFAULT 'dine_in',
   `order_status` enum('pending','preparing','ready','completed','declined') NOT NULL DEFAULT 'pending',
   `decline_reason` varchar(255) DEFAULT NULL,
+  `decline_note` varchar(255) DEFAULT NULL,
   `discount_type` enum('none','senior','pwd','student') NOT NULL DEFAULT 'none',
   `discount_amount` decimal(8,2) NOT NULL DEFAULT 0.00,
   `subtotal` decimal(10,2) NOT NULL DEFAULT 0.00,
