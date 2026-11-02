@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2b1810">
+    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
+         <meta name="csrf-token" content="..."> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <title>Cashier Sign In | QR Cafe POS</title>
+  </head>
+  <body>
+    <main class="login-screen">
+      <div class="login-card">
+        <div class="login-visual">
+          <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=760&amp;h=640&amp;fit=crop&amp;auto=format" alt="Café interior">
+          <div class="login-visual__fade"></div>
+          <div class="login-visual__brand">
+            <div class="brand-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            </div>
+            <span>ORDERING SYSTEM</span>
+          </div>
+          <div class="login-visual__copy">
+            <h2 class="login-visual__title">Cozy brews &amp; fresh pastries.</h2>
+            <p class="login-visual__text">Providing the best service to our beloved guests, one cup at a time.</p>
+          </div>
+        </div>
+
+        <div class="login-form-panel">
+          <h1>Cashier Sign In</h1>
+          <p class="login-form-panel__sub">Enter your system credentials to access Station 1</p>
+
+          <form id="login-form" novalidate>
+            <div class="field">
+              <label class="field__label" for="username">Username / ID</label>
+              <input id="username" class="field__input" name="username" type="text" autocomplete="username">
+            </div>
+            <div class="field field--last">
+              <label class="field__label" for="password">Password</label>
+              <input id="password" class="field__input" name="password" type="password" autocomplete="current-password">
+            </div>
+            <p id="login-error" class="login-error" role="alert" hidden></p>
+            <button id="login-submit" class="btn btn--primary login-submit" type="submit">Sign In to POS</button>
+          </form>
+
+          <p class="login-help">Trouble logging in? Contact System Administrator.</p>
+        </div>
+      </div>
+    </main>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/pages/login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111113">
+    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
+         <meta name="csrf-token" content="..."> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <title>Customize your order | QR Cafe</title>
+  </head>
+  <body>
+    <main class="app-shell screen detail-shell screen-slide-up">
+      <div class="detail-main">
+        <div class="detail-hero">
+          <img id="item-image" class="detail-image" src="" alt="">
+          <div class="detail-hero-fade"></div>
+          <a class="btn-back btn-back--overlay" href="menu.html" aria-label="Back to menu">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+          </svg>
+          </a>
+        </div>
+
+        <div class="detail-content">
+          <div class="item-head">
+            <h1 id="item-name" class="item-title"></h1>
+            <span id="item-price" class="item-price"></span>
+          </div>
+          <p id="item-desc" class="item-desc"></p>
+
+          <div class="divider"></div>
+
+          <!-- Size / Sugar Level / Serve (only the ones this item supports) -->
+          <div id="item-options"></div>
+
+          <div class="divider"></div>
+
+          <div class="qty-row">
+            <p class="qty-row__label">Select Quantity</p>
+            <div id="qty-stepper"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-bar bottom-bar--card">
+        <div class="bottom-bar__inner">
+          <div>
+            <p class="bottom-bar__label">Cart Subtotal</p>
+            <p id="item-subtotal" class="bottom-bar__value"></p>
+          </div>
+          <button id="add-to-cart" class="btn-primary" type="button">Add to Cart</button>
+        </div>
+      </div>
+    </main>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/pages/item.js"></script>
+  </body>
+</html>

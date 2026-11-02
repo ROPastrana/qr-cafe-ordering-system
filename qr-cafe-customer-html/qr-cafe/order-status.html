@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111113">
+    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
+         <meta name="csrf-token" content="..."> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <title>Order Status | QR Cafe</title>
+  </head>
+  <body>
+    <main class="app-shell screen screen-fade">
+      <div class="status-header">
+        <div class="brand">
+          <svg class="logo" width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+            <circle class="logo-bg" cx="18" cy="18" r="18" />
+            <path d="M11 16h14l-2 8H13l-2-8Z" stroke="white" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M25 18.5c2 0 3 1 3 2.5s-1 2.5-3 2.5" stroke="white" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M15 13.5c0-1 1-1.5 1-2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M18 13.5c0-1 1-1.5 1-2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M21 13.5c0-1 1-1.5 1-2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          <span class="brand__name">Ordering System</span>
+        </div>
+        <span id="order-type-badge" class="status-badge"></span>
+      </div>
+
+      <div class="status-body">
+        <h1 id="status-title" class="page-title mb-0.5"></h1>
+        <p id="status-subtitle" class="page-subtitle mb-6"></p>
+
+        <!-- Status icon + order number -->
+        <div class="status-hero">
+          <div id="status-icon" class="status-icon">
+            <svg id="icon-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" hidden>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+            <svg id="icon-x" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" hidden>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <p class="meta-label meta-label--wide">Your Order Number</p>
+          <p id="order-number" class="order-number"></p>
+        </div>
+
+        <!-- Customer info -->
+        <div class="info-card">
+          <div class="info-row">
+            <span class="meta-label">Customer</span>
+            <span id="customer-name" class="info-value"></span>
+          </div>
+          <div class="info-row">
+            <span class="meta-label">Order Type</span>
+            <span id="order-type" class="info-value"></span>
+          </div>
+        </div>
+
+        <!-- Received: next steps -->
+        <div id="card-received" class="status-card" hidden>
+          <p class="status-card__title">Next Steps</p>
+          <p class="status-card__text">1. Your drinks &amp; pastries are being prepared fresh now.</p>
+          <p class="status-card__text">2. Please proceed to the counter to pay. Your order will be sent to the kitchen once payment is confirmed.</p>
+        </div>
+
+        <!-- Declined: reason -->
+        <div id="card-declined" class="status-card" hidden>
+          <p class="status-card__title">Order Declined</p>
+          <p class="status-card__text">We're sorry — the café was unable to fulfill this order.</p>
+          <p class="status-card__text">Reason: Kitchen closing for the day.</p>
+          <p class="status-card__text">No payment has been charged. Please check with the counter if you have questions.</p>
+        </div>
+
+        <!-- Summary -->
+        <p class="section-title mb-3">Summary</p>
+        <div class="summary-card">
+          <div id="summary-items" class="summary-list"></div>
+          <div class="summary-total">
+            <span id="total-label"></span>
+            <span id="order-total" class="amount"></span>
+          </div>
+        </div>
+
+        <a id="back-to-menu" class="btn-primary btn-primary--block" href="menu.html">Back to Menu</a>
+      </div>
+    </main>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/pages/order-status.js"></script>
+  </body>
+</html>

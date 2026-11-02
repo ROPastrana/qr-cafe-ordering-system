@@ -1,0 +1,14 @@
+{
+  "name": "qr-cafe-customer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QR Cafe customer self-ordering portal (HTML + CSS + JavaScript + Tailwind CSS)",
+  "scripts": {
+    "build:css": "tailwindcss -i ./assets/css/input.css -o ./assets/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./assets/css/input.css -o ./assets/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}

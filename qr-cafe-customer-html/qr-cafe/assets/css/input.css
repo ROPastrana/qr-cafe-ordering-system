@@ -1,0 +1,393 @@
+/* ==========================================================================
+   QR Cafe – Customer Portal   |   Tailwind CSS v4 source
+   Build:  npm run build:css   ->   assets/css/tailwind.css
+
+   NAMING CONVENTION (BEM-lite)
+     .block              a component              .btn-back, .menu-card
+     .block__element     a part of that component .menu-card__name
+     .block--modifier    a variant of it          .btn-back--overlay
+     [aria-pressed], [aria-selected]   state styles (no extra "active" classes)
+
+   Components are built from Tailwind utilities with @apply, so the HTML stays
+   short. One-off spacing (mb-4, mt-2 …) can still be added in the HTML.
+
+   TABLE OF CONTENTS
+     1. Theme tokens      6. Menu page         11. Status page
+     2. Base              7. Item page         12. Splash page
+     3. Animations        8. Cart page         13. Tablet  (>= 768px)
+     4. Shared layout     9. Stepper           14. Desktop (>= 1100px)
+     5. Buttons          10. Pills & tabs
+   ========================================================================== */
+@import "tailwindcss";
+
+/* 1. THEME TOKENS ---------------------------------------------------------- */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-cafe-bg: #111113;
+  --color-cafe-card: #1e1e20;
+  --color-cafe-elevated: #252527;
+  --color-cafe-detail: #1a1a1c;
+  --color-cafe-warm: #2a1510;
+  --color-cafe-warm-border: #3d2218;
+  --color-cafe-text: #f2f2f2;
+  --color-cafe-sub: #8e8e93;
+  --color-cafe-border: #333335;
+  --color-cafe-accent: #c8502a;
+  --color-cafe-accent-light: #e0724e;
+  --color-cafe-success: #34c759;
+  --color-cafe-danger: #7b3428;
+}
+
+/* 2. BASE ------------------------------------------------------------------ */
+@layer base {
+  * { -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar { display: none; }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #111113;
+    overflow: hidden;
+    height: 100dvh;
+    margin: 0;
+  }
+}
+
+/* 3. ANIMATIONS ------------------------------------------------------------ */
+@keyframes screenEnter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.screen-enter    { animation: screenEnter 0.22s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.screen-slide-up { animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.screen-fade     { animation: fadeIn 0.2s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-enter, .screen-slide-up, .screen-fade { animation: none; }
+}
+
+@layer components {
+
+  /* 4. SHARED LAYOUT ------------------------------------------------------- */
+  .app-shell { width: 100%; height: 100dvh; margin: 0 auto; }
+  .screen    { @apply flex flex-col bg-cafe-bg; }
+
+  .logo      { @apply shrink-0; }
+  .logo-bg   { @apply fill-cafe-accent; }
+  .logo-bg--dark { fill: rgb(0 0 0 / 0.2); }
+
+  .brand       { @apply flex items-center gap-2.5; }
+  .brand__name { @apply text-[17px] font-bold text-cafe-text; }
+
+  .page-title    { @apply text-[24px] font-bold text-cafe-text; }
+  .page-subtitle { @apply text-[13px] text-cafe-sub; }
+  .section-title { @apply text-[17px] font-bold text-cafe-text; }
+
+  .price  { @apply text-[14px] font-bold text-cafe-accent; }
+  .amount { @apply font-bold text-cafe-accent; }
+
+  .divider { @apply my-4 h-px bg-cafe-border; }
+
+  .bottom-bar        { @apply shrink-0 border-t border-cafe-border bg-cafe-bg px-4 py-3; }
+  .bottom-bar--card  { @apply bg-cafe-card py-4; }
+  .bottom-bar__inner { @apply flex items-center justify-between; }
+  .bottom-bar__label { @apply text-[11px] text-cafe-sub; }
+  .bottom-bar__value { @apply text-[18px] font-bold text-cafe-text; }
+
+  .message         { @apply py-10 text-center text-[13px] text-cafe-sub; }
+  .message__title  { @apply mb-1 text-[14px] font-semibold text-cafe-text; }
+  .message__text   { @apply mb-3; }
+  .message__action { @apply text-[13px] font-semibold text-cafe-accent; }
+
+  .empty-state       { @apply flex flex-col items-center justify-center py-20; }
+  .empty-state__title { @apply mb-1 text-[15px] font-semibold text-cafe-text; }
+  .empty-state__link  { @apply mt-2 text-[13px] font-semibold text-cafe-accent transition-opacity hover:opacity-75; }
+
+  /* 5. BUTTONS ------------------------------------------------------------- */
+  .btn-primary {
+    @apply rounded-full bg-cafe-accent px-8 py-3.5 text-[14px] font-bold text-white transition-opacity duration-150;
+  }
+  .btn-primary:not(:disabled):hover  { opacity: 0.85; }
+  .btn-primary:not(:disabled):active { opacity: 0.7; }
+  .btn-primary:disabled { @apply cursor-not-allowed bg-cafe-elevated text-cafe-sub; }
+  .btn-primary--block   { @apply flex w-full items-center justify-center gap-1.5 px-0 py-4; }
+
+  .btn-ghost {
+    @apply w-full rounded-full border border-cafe-border py-2.5 text-[12px] text-cafe-sub transition-all duration-150;
+  }
+  .btn-ghost:disabled { @apply cursor-not-allowed opacity-30; }
+
+  .btn-back {
+    @apply flex size-9 items-center justify-center rounded-full bg-cafe-card transition-opacity duration-150 hover:opacity-70;
+  }
+  .btn-back svg { @apply size-5 text-cafe-text; }
+  .btn-back--overlay { @apply absolute top-5 left-4 bg-cafe-card/85 backdrop-blur-sm hover:opacity-80; }
+
+  .btn-cart {
+    @apply flex items-center gap-2 rounded-full bg-cafe-accent px-5 py-2.5 text-[13px] font-semibold text-white transition-opacity duration-150 hover:opacity-85;
+  }
+  .btn-cart svg { @apply size-4; }
+
+  .btn-add {
+    @apply rounded-full border border-cafe-border bg-cafe-elevated px-3 py-1 text-[12px] font-semibold text-cafe-text transition-colors duration-150 hover:opacity-80;
+  }
+
+  .btn-remove { @apply ml-1 shrink-0 text-cafe-accent transition-opacity hover:opacity-70; }
+  .btn-remove svg { @apply size-[18px]; }
+
+  /* 6. MENU PAGE ----------------------------------------------------------- */
+  .menu-header { @apply shrink-0 bg-cafe-accent px-4 pt-5 pb-3; }
+  .menu-header .brand__name { @apply text-white; }
+  .menu-scroll { @apply flex-1 overflow-y-auto px-4 pb-4; }
+
+  .menu-card-grid, .cart-items-grid { display: grid; gap: 0.75rem; }
+
+  .menu-card, .cart-card, .summary-card {
+    @apply rounded-2xl border border-cafe-border bg-cafe-card;
+  }
+  .menu-card { @apply flex cursor-pointer gap-3 p-3 transition-opacity duration-100 active:opacity-75; }
+  .menu-card__img    { @apply size-[72px] shrink-0 rounded-xl bg-cafe-elevated object-cover; }
+  .menu-card__body   { @apply flex min-w-0 flex-1 flex-col justify-between py-0.5; }
+  .menu-card__name   { @apply text-[14px] leading-snug font-bold text-cafe-text; }
+  .menu-card__desc   { @apply mt-0.5 line-clamp-2 text-[12px] leading-snug text-cafe-sub; }
+  .menu-card__footer { @apply mt-1.5 flex items-center justify-between; }
+
+  .cart-badge {
+    @apply flex size-7 items-center justify-center rounded-full bg-cafe-accent text-[12px] font-bold text-white;
+  }
+  .cart-bar__summary { @apply flex items-center gap-2; }
+  .cart-bar__label   { @apply text-[14px] font-medium text-cafe-text; }
+
+  /* 7. ITEM PAGE ----------------------------------------------------------- */
+  .detail-shell { @apply bg-cafe-detail; }
+  .detail-main  { display: contents; }
+  .detail-hero  { @apply relative shrink-0 bg-cafe-elevated; }
+  .detail-image { @apply w-full rounded-b-[24px] object-cover; height: 240px; }
+  .detail-hero-fade {
+    @apply absolute inset-x-0 bottom-0 h-16 rounded-b-[24px] bg-linear-to-t from-cafe-detail/50 to-transparent;
+  }
+  .detail-content { @apply flex-1 overflow-y-auto px-4 pt-5; }
+
+  .item-head  { @apply mb-2 flex items-start justify-between gap-3; }
+  .item-title { @apply flex-1 text-[22px] leading-tight font-bold text-cafe-text; }
+  .item-price { @apply text-[22px] font-bold whitespace-nowrap text-cafe-accent; }
+  .item-desc  { @apply text-[13px] leading-relaxed text-cafe-sub; }
+
+  .option-group        { @apply mb-4; }
+  .option-group__title { @apply mb-2.5 text-[14px] font-bold text-cafe-text; }
+  .option-pills        { @apply flex gap-2; }
+  .option-pills--tight { @apply gap-1.5; }
+
+  .qty-row       { @apply flex items-center justify-between pb-4; }
+  .qty-row__label { @apply text-[14px] font-bold text-cafe-text; }
+
+  /* 8. CART PAGE ----------------------------------------------------------- */
+  .cart-header  { @apply shrink-0 px-4 pt-5 pb-3; }
+  .cart-header .btn-back { @apply mb-4; }
+  .cart-content { @apply flex-1 overflow-y-auto px-4; }
+  .cart-footer  { @apply flex shrink-0 flex-col gap-2 border-t border-cafe-border bg-cafe-bg px-4 pt-3 pb-6; }
+  .cart-error   { @apply text-center text-[12px] text-cafe-accent-light; }
+  .cart-total   { @apply mb-5 flex justify-between text-[15px] font-bold text-cafe-text; }
+  .order-type   { @apply grid grid-cols-2 gap-2 pb-4; }
+
+  .cart-card         { @apply flex gap-3 p-3; }
+  .cart-card__img    { @apply size-[68px] shrink-0 rounded-xl bg-cafe-elevated object-cover; }
+  .cart-card__body   { @apply min-w-0 flex-1; }
+  .cart-card__head   { @apply flex items-start justify-between; }
+  .cart-card__name   { @apply text-[14px] font-bold text-cafe-text; }
+  .cart-card__variant { @apply mt-0.5 text-[12px] text-cafe-sub; }
+  .cart-card__price  { @apply mt-0.5 text-[13px] font-bold text-cafe-accent; }
+  .cart-card__qty    { @apply mt-1.5; }
+
+  .text-input {
+    @apply mb-3 w-full rounded-2xl border border-cafe-border bg-cafe-card px-4 py-3.5 text-[14px] text-cafe-text transition-colors duration-150 placeholder:text-cafe-sub focus:outline-none;
+  }
+  /* Accent border once something is typed (or while focused). */
+  .text-input:not(:placeholder-shown),
+  .text-input:focus { @apply border-cafe-accent; }
+
+  /* 9. STEPPER (quantity +/-) ---------------------------------------------- */
+  .stepper        { @apply flex items-center gap-3; }
+  .stepper__btn   { @apply flex size-8 items-center justify-center rounded-full text-[16px] font-medium transition-opacity duration-100; }
+  .stepper__btn--dec { @apply border border-cafe-border bg-cafe-card text-cafe-text active:opacity-60; }
+  .stepper__btn--inc { @apply bg-cafe-accent text-white active:opacity-70; }
+  .stepper__value { @apply w-4 text-center text-[14px] font-semibold text-cafe-text; }
+  .stepper--sm .stepper__btn { @apply size-7 text-[13px]; }
+
+  /* 10. PILLS & TABS (state comes from aria attributes) ------------------- */
+  .pill {
+    @apply flex-1 rounded-full border border-cafe-border bg-cafe-card py-2.5 text-[13px] font-semibold text-cafe-text transition-all duration-150;
+  }
+  .pill[aria-pressed="true"] { @apply border-cafe-accent bg-cafe-accent text-white; }
+  .pill--serve { @apply flex-none px-7; }
+  .pill--type  { @apply py-3.5 text-[14px] font-bold; }
+
+  .tabs { @apply flex gap-2; }
+  .tab {
+    @apply flex-1 rounded-full border border-white/35 bg-white/15 py-2 text-[13px] font-semibold text-white transition-all duration-200;
+  }
+  .tab[aria-selected="true"] { @apply border-white bg-white text-cafe-accent; }
+
+  /* 11. STATUS PAGE (order received / declined) --------------------------- */
+  .status-header { @apply flex shrink-0 items-center justify-between px-4 pt-5 pb-3; }
+  .status-body   { @apply flex-1 overflow-y-auto px-4 pb-6; }
+  .status-badge  {
+    @apply rounded-full border border-cafe-warm-border bg-cafe-warm px-3 py-1 text-[12px] font-semibold text-cafe-accent;
+  }
+  .status-hero { @apply mb-5 flex flex-col items-center; }
+  .status-icon { @apply mb-3 flex size-14 items-center justify-center rounded-full; }
+  .status-icon svg { @apply size-7 text-white; }
+  .status-icon--success { @apply bg-cafe-success; }
+  .status-icon--danger  { @apply bg-cafe-danger; }
+
+  .meta-label       { @apply text-[11px] font-semibold tracking-wider text-cafe-sub uppercase; }
+  .meta-label--wide { @apply mb-1 tracking-[0.14em]; }
+  .order-number     { @apply text-[36px] leading-none font-bold text-cafe-text; }
+
+  .info-card  { @apply mb-3 flex flex-col gap-2 rounded-2xl border border-cafe-warm-border bg-cafe-warm px-4 py-3; }
+  .info-row   { @apply flex items-center justify-between; }
+  .info-value { @apply text-[14px] font-bold text-cafe-text; }
+
+  .status-card { @apply mb-5 rounded-2xl border border-cafe-warm-border bg-cafe-warm px-4 py-3.5; }
+  .status-card__title { @apply mb-2 text-[14px] font-bold text-cafe-accent; }
+  .status-card__text  { @apply text-[13px] leading-relaxed text-cafe-text; }
+  .status-card__text + .status-card__text { @apply mt-1; }
+
+  .summary-card  { @apply mb-6 px-4 py-3.5; }
+  .summary-list  { @apply mb-3 flex flex-col gap-2.5; }
+  .summary-row   { @apply flex justify-between text-[13px] text-cafe-text; }
+  .summary-total { @apply flex items-center justify-between border-t border-cafe-border pt-2.5 text-[14px] font-bold text-cafe-text; }
+
+  /* 12. SPLASH PAGE -------------------------------------------------------- */
+  .splash-shell { @apply relative overflow-hidden bg-cafe-bg; }
+
+  .splash-image {
+    @apply absolute inset-0 size-full object-cover;
+    object-position: 52% center;
+    transform: scale(1.015);
+  }
+  .splash-overlay {
+    @apply absolute inset-0;
+    background:
+      linear-gradient(to bottom, rgba(10, 10, 11, 0.64) 0%, rgba(10, 10, 11, 0.08) 32%, rgba(10, 10, 11, 0.22) 54%, rgba(10, 10, 11, 0.92) 78%, #111113 100%),
+      linear-gradient(to right, rgba(10, 10, 11, 0.18), transparent 70%);
+  }
+  .splash-top {
+    @apply absolute inset-x-0 top-0 flex items-center gap-3 px-6;
+    padding-top: max(2rem, env(safe-area-inset-top));
+  }
+  .splash-brand__name { @apply text-[17px] leading-none font-bold tracking-[-0.01em] text-white; }
+  .splash-brand__tag  { @apply mt-0.5 text-[10px] font-medium tracking-widest text-white/50 uppercase; }
+
+  .splash-content {
+    @apply absolute inset-x-0 px-6;
+    bottom: max(2rem, env(safe-area-inset-bottom));
+    max-width: 34rem;
+  }
+  .splash-eyebrow       { @apply mb-4 flex items-center gap-2.5; }
+  .splash-eyebrow__line { @apply block h-px w-8 bg-cafe-accent; }
+  .splash-eyebrow__text { @apply text-[11px] font-bold tracking-[0.2em] text-cafe-accent-light uppercase; }
+
+  .splash-title {
+    @apply mb-4 leading-[1.02] font-extrabold tracking-[-0.04em] text-white;
+    font-size: clamp(2.75rem, 11vw, 4rem);
+  }
+  .splash-description {
+    @apply mb-7 text-[14px] leading-relaxed text-cafe-text/72;
+    max-width: 29rem;
+  }
+  .splash-cta {
+    @apply flex w-full items-center justify-center gap-2 rounded-2xl bg-cafe-accent px-6 py-[15px] text-[15px] font-bold tracking-tight text-white transition-all duration-200 active:scale-[0.97];
+    box-shadow: 0 14px 34px rgba(200, 80, 42, 0.3);
+  }
+  .splash-cta svg { @apply size-4; }
+
+  .splash-services { @apply mt-5 flex items-center justify-center gap-3; }
+  .splash-services__item { @apply flex items-center gap-3 text-[11px] text-white/35; }
+  .splash-services__item:not(:last-child)::after {
+    content: "";
+    @apply size-[3px] rounded-full bg-white/20;
+  }
+
+  /* 13. TABLET (>= 768px) -------------------------------------------------- */
+  @media (min-width: 768px) {
+    body {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(200, 80, 42, 0.1), transparent 28rem),
+        #09090a;
+    }
+
+    .splash-top, .splash-content {
+      padding-left: clamp(3rem, 7vw, 6rem);
+      padding-right: 3rem;
+    }
+    .splash-content {
+      top: 52%;
+      bottom: auto;
+      max-width: 680px;
+      transform: translateY(-42%);
+    }
+    .splash-image { object-position: 66% center; }
+    .splash-overlay {
+      background:
+        linear-gradient(90deg, rgba(8, 8, 9, 0.94) 0%, rgba(8, 8, 9, 0.76) 35%, rgba(8, 8, 9, 0.22) 68%, rgba(8, 8, 9, 0.2) 100%),
+        linear-gradient(to bottom, rgba(8, 8, 9, 0.5), transparent 28%, rgba(8, 8, 9, 0.35) 100%);
+    }
+    .splash-title       { font-size: clamp(4rem, 7vw, 5.5rem); }
+    .splash-description { font-size: 1rem; }
+    .splash-cta         { width: auto; min-width: 220px; }
+    .splash-services    { justify-content: flex-start; }
+
+    .menu-header { padding: 1.5rem 2rem 1rem; }
+    .menu-header > * { max-width: 1036px; margin-inline: auto; }
+    .menu-scroll { padding: 0.5rem 2rem 1.5rem; }
+    .menu-scroll > * { max-width: 1036px; margin-inline: auto; }
+    .menu-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .menu-card { min-height: 116px; padding: 1rem; }
+    .menu-card__img { width: 88px; height: 88px; }
+
+    .bottom-bar__inner { width: 100%; max-width: 1036px; margin-inline: auto; }
+
+    .detail-main {
+      display: grid;
+      grid-template-columns: minmax(300px, 0.95fr) minmax(400px, 1.05fr);
+      flex: 1;
+      min-height: 0;
+    }
+    .detail-hero { min-height: 0; }
+    .detail-image { height: 100%; min-height: 100%; border-radius: 0; }
+    .detail-hero-fade { border-radius: 0; }
+    .detail-content { padding: 2.25rem 2rem 1rem; }
+
+    .cart-header, .cart-content, .cart-footer,
+    .status-header, .status-body {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .cart-items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* 14. DESKTOP (>= 1100px) ------------------------------------------------ */
+  @media (min-width: 1100px) {
+    .menu-header { padding-left: 3rem; padding-right: 3rem; }
+    .menu-header > *, .menu-scroll > *, .bottom-bar__inner { max-width: 1184px; }
+    .menu-scroll { padding-left: 3rem; padding-right: 3rem; }
+    .menu-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .menu-card { min-height: 132px; }
+
+    .detail-main { grid-template-columns: minmax(440px, 1.1fr) minmax(460px, 0.9fr); }
+    .detail-content { padding: 3rem 3.5rem 1.5rem; }
+
+    .splash-content { padding-left: clamp(5rem, 8vw, 8rem); max-width: 760px; }
+    .splash-top { padding-left: clamp(5rem, 8vw, 8rem); }
+  }
+}

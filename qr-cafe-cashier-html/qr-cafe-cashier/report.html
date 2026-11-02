@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2b1810">
+    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
+         <meta name="csrf-token" content="..."> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <title>Sales &amp; Performance | QR Cafe POS</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- Sidebar is filled by assets/js/layout.js -->
+      <aside id="sidebar" class="sidebar"></aside>
+
+      <main class="app-main screen-enter">
+        <header class="top-bar">
+          <div>
+            <h1 class="top-bar__title">Sales &amp; Performance</h1>
+            <p class="top-bar__subtitle">Real-time analytics and report export</p>
+          </div>
+          <div class="top-bar__clock">
+            <div id="clock-time" class="top-bar__time"></div>
+            <div id="clock-date" class="top-bar__date"></div>
+          </div>
+        </header>
+
+        <div class="report-content">
+          <div class="report-toolbar">
+            <div class="date-range">
+              <input id="start-date" type="date" aria-label="Start date">
+              <span class="date-range__sep">–</span>
+              <input id="end-date" type="date" aria-label="End date">
+            </div>
+            <div class="export">
+              <button id="export-toggle" class="btn btn--success" type="button" aria-haspopup="true" aria-expanded="false">Export Excel / CSV ▾</button>
+              <div id="export-menu" class="export__menu" hidden>
+                <button class="export__item" type="button" data-export>Export as Excel (.csv)</button>
+                <button class="export__item" type="button" data-export>Export as CSV</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="report-stats" class="report-stats"></div>
+
+          <div class="report-details">
+            <section class="panel">
+              <h2 class="panel__title">Sales Distribution by Category</h2>
+              <div id="category-bars"></div>
+            </section>
+            <section class="panel">
+              <h2 class="panel__title panel__title--tight">Top Performing Menu Items</h2>
+              <div id="top-items"></div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/modals.js"></script>
+    <script src="assets/js/pages/report.js"></script>
+  </body>
+</html>

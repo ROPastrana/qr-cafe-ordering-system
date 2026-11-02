@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2b1810">
+    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
+         <meta name="csrf-token" content="..."> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <title>Order History | QR Cafe POS</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- Sidebar is filled by assets/js/layout.js -->
+      <aside id="sidebar" class="sidebar"></aside>
+
+      <main class="app-main screen-enter">
+        <header class="top-bar">
+          <div>
+            <h1 class="top-bar__title">Order History</h1>
+            <p class="top-bar__subtitle">Lookup and review completed orders</p>
+          </div>
+          <div class="top-bar__clock">
+            <div id="clock-time" class="top-bar__time"></div>
+            <div id="clock-date" class="top-bar__date"></div>
+          </div>
+        </header>
+
+        <div class="history-content">
+          <div class="history-filters">
+            <label class="sr-only" for="search">Search orders</label>
+            <input id="search" class="search-input" type="search" placeholder="Search Order ID, table...">
+            <div id="status-filter" class="filter-group" role="group" aria-label="Filter by status"></div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">ORDER ID</th><th scope="col">TIME</th><th scope="col">TYPE</th>
+                  <th scope="col">ITEMS SUMMARY</th><th scope="col">TOTAL</th><th scope="col">STATUS</th><th scope="col">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="history-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/modals.js"></script>
+    <script src="assets/js/pages/history.js"></script>
+  </body>
+</html>

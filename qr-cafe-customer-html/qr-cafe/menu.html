@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111113">
+    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
+         <meta name="csrf-token" content="..."> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <title>Menu | QR Cafe</title>
+  </head>
+  <body>
+    <main class="app-shell screen screen-enter">
+      <header class="menu-header">
+        <div class="brand mb-4">
+          <svg class="logo" width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+            <circle class="logo-bg logo-bg--dark" cx="18" cy="18" r="18" />
+            <path d="M11 16h14l-2 8H13l-2-8Z" stroke="white" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M25 18.5c2 0 3 1 3 2.5s-1 2.5-3 2.5" stroke="white" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M15 13.5c0-1 1-1.5 1-2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M18 13.5c0-1 1-1.5 1-2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M21 13.5c0-1 1-1.5 1-2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          <span class="brand__name">Ordering System</span>
+        </div>
+        <!-- Category tabs (filled by assets/js/pages/menu.js) -->
+        <div id="category-tabs" class="tabs" role="tablist" aria-label="Menu categories"></div>
+      </header>
+
+      <!-- Menu items (filled by assets/js/pages/menu.js) -->
+      <div id="menu-scroll" class="menu-scroll" aria-live="polite">
+        <p class="message">Loading menu…</p>
+      </div>
+
+      <!-- Cart bar -->
+      <div class="bottom-bar">
+        <div class="bottom-bar__inner">
+          <div class="cart-bar__summary">
+            <div id="cart-count" class="cart-badge">0</div>
+            <span class="cart-bar__label">Items in Cart</span>
+          </div>
+          <a class="btn-cart" href="cart.html">
+            View Cart
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/pages/menu.js"></script>
+  </body>
+</html>
