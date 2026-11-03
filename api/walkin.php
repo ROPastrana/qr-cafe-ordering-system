@@ -13,6 +13,7 @@ function fail(int $code, string $msg) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail(405, 'Method not allowed');
+require_csrf();
 
 $body = json_decode(file_get_contents('php://input'), true);
 if (!is_array($body)) fail(400, 'Invalid request');

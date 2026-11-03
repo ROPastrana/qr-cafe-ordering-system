@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
+require_csrf();
 
 $body = json_decode(file_get_contents('php://input'), true);
 $orderId = is_array($body) ? filter_var($body['orderId'] ?? null, FILTER_VALIDATE_INT) : false;

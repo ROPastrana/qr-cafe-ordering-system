@@ -1,4 +1,5 @@
 <?php
+const CSRF_ENFORCED = true;           // set to false only while debugging with curl
 const SESSION_MAX_AGE = 12 * 60 * 60; // cashiers must sign in again after 12 hours
 
 function json_error(int $status, string $message): never {
@@ -18,6 +19,26 @@ function start_session(): void {
             'samesite' => 'Lax',
         ]);
         session_start();
+    }
+}
+
+function csrf_token(): string {
+    start_session();
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+// Call on every POST/PATCH. Other sites can make the browser send our cookie,
+// but they cannot read the token from csrf.php, so they cannot send this header.
+function require_csrf(): void {
+    if (!CSRF_ENFORCED) return;
+    start_session();
+    $sent = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    $expected = (string)($_SESSION['csrf_token'] ?? '');
+    if ($expected === '' || !hash_equals($expected, $sent)) {
+        json_error(403, 'Security check failed. Please reload the page and try again.');
     }
 }
 
