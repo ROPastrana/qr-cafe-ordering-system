@@ -138,5 +138,21 @@ Cafe.api = (function () {
       });
   }
 
-  return { getMenu: getMenu, placeOrder: placeOrder };
+  /* resolves -> { code, status, declineReason, declineNote, receiptToken } (api/track.php)
+     status: pending | preparing | ready | completed | declined */
+  function trackOrder(trackToken) {
+    return fetch(cfg.API_BASE_URL + "/track.php?t=" + encodeURIComponent(trackToken), { headers: { Accept: "application/json" } })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (json) {
+          if (!res.ok) {
+            var err = new Error(json.error || "Could not check your order (" + res.status + ")");
+            err.status = res.status;
+            throw err;
+          }
+          return json;
+        });
+      });
+  }
+
+  return { getMenu: getMenu, placeOrder: placeOrder, trackOrder: trackOrder };
 })();
