@@ -156,9 +156,9 @@
 
     var lines = cartLines();
     if (!lines.length) return;
+    /* No id yet: walkin.php assigns the order number when the payment is saved. */
     var draft = Cafe.buildOrder(form.customerName.trim() || "Walk-in", form.fulfillment,
       lines.map(function (l) { return l.entry; }), discountType);
-    draft.id = store.nextOrderId();          /* provisional id shown at checkout */
     store.setCheckout(draft);
     window.location.href = "checkout.html";
   });
