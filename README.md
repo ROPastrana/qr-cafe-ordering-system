@@ -81,8 +81,35 @@ Walk-in orders are created and paid in one step (`walkin.php`) and start at
 | `walkin.php` | POST | cashier | Create a walk-in order and its payment in one transaction |
 | `history.php?from=&to=&status=` | GET | cashier | Finished orders in a date range (history and sales report) |
 
-Helpers that are not reachable from the browser: `db.php`, `auth.php`,
-`errors.php`, `order_lib.php`, `payment.php`, `queue_lib.php`.
+Every endpoint answers the wrong HTTP method with 405 and every error as
+`{"error": "message"}`.
+
+## Code structure (object-oriented PHP)
+
+Each endpoint file is short: it checks the method, the CSRF token and the
+cashier's sign-in, calls a class, and sends JSON. The classes are in `api/src/`
+(blocked from the browser by `api/src/.htaccess`) and load automatically through
+`api/src/bootstrap.php`.
+
+| Class | Responsibility |
+| --- | --- |
+| `Request`, `Response` | Read the JSON body and check the method; send JSON |
+| `ErrorHandler` | Turns any exception into a JSON error, so endpoints need no try/catch |
+| `ApiException` → `PayException` | An error the user should see (status, message, headers); payment errors extend it |
+| `Database` | One shared PDO connection, made from `api/db.php` |
+| `Session` | Session cookie, CSRF token, signed-in cashier, 12-hour expiry |
+| `RateLimiter` | Per-IP request limits |
+| `LoginService` | Password check and the 5-strike lockout |
+| `MenuRepository`, `OrderRepository` | Read the menu and orders (queue, history, tracking, receipts) |
+| `OrderService` | Prices carts, creates self-orders and walk-ins, changes order status |
+| `PaymentService` | Cash / GCash, discounts, pending → preparing |
+
+OOP ideas used: classes and objects (`new OrderService($pdo)`), encapsulation
+(private methods and constants), inheritance (`PayException extends
+ApiException`), dependency injection (services receive the PDO connection), and
+separation of concerns (repositories read, services change data, endpoints
+handle HTTP). `api/db.php` (git-ignored) holds the database login and is also
+blocked from the browser.
 
 ## Business rules (enforced by the server)
 
