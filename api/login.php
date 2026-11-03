@@ -29,5 +29,6 @@ start_session();
 session_regenerate_id(true);
 $_SESSION['cashier_id']   = (int)$row['cashier_id'];
 $_SESSION['cashier_name'] = $row['full_name'];
+$_SESSION['login_at']     = time();
 
 echo json_encode(['id' => (int)$row['cashier_id'], 'name' => $row['full_name']]);
