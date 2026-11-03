@@ -34,6 +34,8 @@ Cafe.layout = (function () {
           return '<a class="nav-link" href="' + n.href + '"' + (n.id === active ? ' aria-current="page"' : "") + ">" +
             ui.icons[n.icon] + '<span class="nav-link__label">' + n.label + "</span></a>";
         }).join("") +
+        /* Phones hide the sidebar's logout button (input.css, max-width 700px), so the bottom bar gets one */
+        '<button type="button" class="nav-link" data-logout hidden>' + ui.icons.logout + '<span class="nav-link__label">Log Out</span></button>' +
       "</nav>" +
       '<div class="sidebar__profile">' +
         '<div class="avatar">' + AVATAR + "</div>" +
@@ -45,9 +47,17 @@ Cafe.layout = (function () {
       '<button class="sidebar__logout" type="button" id="logout-btn">' + ui.icons.logout +
         '<span class="sidebar__logout-label">Logout Session</span></button>';
 
-    document.getElementById("logout-btn").addEventListener("click", function () {
+    function logout() {
       Cafe.api.logout().then(function () { window.location.href = "login.html"; });
-    });
+    }
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    var phoneLogout = aside.querySelector("[data-logout]");
+    var phone = window.matchMedia("(max-width: 700px)");
+    function syncPhoneLogout() { phoneLogout.hidden = !phone.matches; }
+    phoneLogout.addEventListener("click", logout);
+    phone.addEventListener("change", syncPhoneLogout);
+    syncPhoneLogout();
   }
 
   function startClock() {
