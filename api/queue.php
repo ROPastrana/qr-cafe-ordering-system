@@ -1,12 +1,7 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-require 'auth.php';
-require_cashier();
-require 'db.php';
-require 'queue_lib.php';
+// Cashier: open orders plus today's completed / declined ones
+require __DIR__ . '/src/bootstrap.php';
 
-// Active orders always, plus anything from today (completed / declined)
-echo json_encode(
-    fetch_orders($pdo, "o.order_status IN ('pending','preparing','ready') OR DATE(o.created_at) = CURDATE()", []),
-    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-);
+Session::requireCashier();
+
+Response::json((new OrderRepository(Database::connection()))->queue());

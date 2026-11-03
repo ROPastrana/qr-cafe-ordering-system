@@ -11,7 +11,8 @@
 # Don't list the files in /cafe/api/
 Options -Indexes
 
-# Helper files are only loaded with require (from disk), never opened in a browser
-<FilesMatch "^(db|db\.example|auth|errors|order_lib|payment|queue_lib)\.php$">
+# The database login is only loaded with require (from disk), never opened in a browser.
+# The classes in src/ are blocked by src/.htaccess.
+<FilesMatch "^(db|db\.example)\.php$">
     Require all denied
 </FilesMatch>

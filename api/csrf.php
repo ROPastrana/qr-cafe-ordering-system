@@ -1,7 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-require 'auth.php';
+require __DIR__ . '/src/bootstrap.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') json_error(405, 'Method not allowed');
+Request::requireMethod('GET');
 
-echo json_encode(['token' => csrf_token()]);
+Response::json(['token' => Session::csrfToken()]);

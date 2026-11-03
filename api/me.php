@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-require 'auth.php';
+require __DIR__ . '/src/bootstrap.php';
 
-$cashier = require_cashier();
-echo json_encode($cashier);
+$cashier = Session::requireCashier();
+
+Response::json($cashier);

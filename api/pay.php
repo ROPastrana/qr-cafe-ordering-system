@@ -1,32 +1,14 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-require 'auth.php';
-$cashier = require_cashier();
-require 'db.php';
-require 'payment.php';
+// Cashier: settle a customer's order (cash or GCash, optional discount)
+require __DIR__ . '/src/bootstrap.php';
+ErrorHandler::serverErrorMessage('Could not record the payment');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
-}
-require_csrf();
+$cashier = Session::requireCashier();
+Request::requireMethod('POST');
+Session::requireCsrf();
 
-$body = json_decode(file_get_contents('php://input'), true);
-$orderId = is_array($body) ? filter_var($body['orderId'] ?? null, FILTER_VALIDATE_INT) : false;
-if (!$orderId) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing order id']);
-    exit;
-}
+$body = Request::json(false);
+$orderId = filter_var($body['orderId'] ?? null, FILTER_VALIDATE_INT);
+if (!$orderId) throw new ApiException(400, 'Missing order id');
 
-try {
-    echo json_encode(settle_payment($pdo, $orderId, $cashier['id'], $body));
-} catch (PayException $e) {
-    http_response_code($e->status);
-    echo json_encode(['error' => $e->getMessage()]);
-} catch (Throwable $e) {
-    error_log('pay.php: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => 'Could not record the payment']);
-}
+Response::json((new PaymentService(Database::connection()))->settle($orderId, $cashier['id'], $body));
