@@ -28,14 +28,14 @@
     filterEl.querySelectorAll("[data-status]").forEach(function (b) { ui.setPressed(b, b.dataset.status === status); });
 
     var rows = history.filter(function (o) {
-      var matchSearch = !q || ("#" + o.id).includes(q) || o.customer.toLowerCase().includes(q) || o.type.toLowerCase().includes(q);
+      var matchSearch = !q || Cafe.orderNo(o).toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.type.toLowerCase().includes(q);
       return matchSearch && (status === "all" || o.status === status);
     });
 
     rowsEl.innerHTML = rows.length ? rows.map(function (o) {
       var declined = o.status === "declined";
       return "<tr>" +
-        '<td data-label="ORDER ID" class="data-table__id">#' + o.id + "</td>" +
+        '<td data-label="ORDER ID" class="data-table__id">' + esc(Cafe.orderNo(o)) + "</td>" +
         '<td data-label="TIME">' + Cafe.fmtTime(o.createdAt) + "</td>" +
         '<td data-label="TYPE">' + esc(o.type) + "</td>" +
         '<td data-label="ITEMS" class="data-table__items">' + esc(summary(o)) + "</td>" +
@@ -58,9 +58,11 @@
     if (order.status === "declined") Cafe.modals.declineReason(order); else Cafe.modals.orderDetail(order);
   });
 
-  Cafe.api.getOrders().then(function (list) {
-    history = list.filter(function (o) { return o.status === "completed" || o.status === "declined"; })
-      .sort(function (a, b) { return b.id - a.id; });
+  /* Completed and declined orders from the last 30 days, newest first */
+  var today = new Date();
+  var from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
+  Cafe.api.getHistory(Cafe.toDateInput(from), Cafe.toDateInput(today), "finished").then(function (list) {
+    history = list.sort(function (a, b) { return b.createdAt - a.createdAt; });
     render();
   }).catch(function (err) { ui.toast(err.message || "Could not load orders."); });
 

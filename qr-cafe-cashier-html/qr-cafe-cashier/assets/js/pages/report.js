@@ -55,15 +55,14 @@
     var topCat = Object.keys(catRevenue).sort(function (a, b) { return catRevenue[b] - catRevenue[a]; })[0] || "\u2014";
     var topCatPct = Math.round(((catRevenue[topCat] || 0) / totalCat) * 100);
 
-    /* NOTE: the "vs last week" lines are static placeholders from the design. */
     function stat(label, value, sub, mod) {
       return '<div class="stat-card"><p class="stat-card__label">' + label + '</p><p class="stat-card__value' + (mod || "") + '">' + esc(value) +
         '</p><p class="stat-card__sub">' + esc(sub) + "</p></div>";
     }
     statsEl.innerHTML =
       stat("Total Revenue", fmt(revenue), count + " orders in period", " stat-card__value--accent") +
-      stat("Transactions", count + " Orders", "+8.2% vs last week") +
-      stat("Average Ticket", fmt(avg), "-2.1% vs last week") +
+      stat("Transactions", count + " Orders", "Completed orders only") +
+      stat("Average Ticket", fmt(avg), "Revenue ÷ orders") +
       stat("Top Product Category", topCat, topCatPct + "% of overall sales", " stat-card__value--green stat-card__value--lg");
 
     var FILL = { "Non-Coffee": " bar__fill--non-coffee", Pastries: " bar__fill--pastries" };
@@ -95,7 +94,7 @@
   function exportData() {
     var rows = [["Order ID", "Date", "Customer", "Type", "Items", "Total", "Payment"]].concat(
       inRange.map(function (o) {
-        return ["#" + o.id, Cafe.toDateInput(o.createdAt), o.customer, o.type,
+        return [Cafe.orderNo(o), Cafe.toDateInput(o.createdAt), o.customer, o.type,
           o.items.map(function (i) { return i.qty + "x " + i.name; }).join("; "), o.total.toFixed(2), o.paymentMethod || ""];
       }));
     var csv = "\uFEFF" + rows.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
@@ -117,11 +116,20 @@
   document.addEventListener("click", function () { setMenu(false); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") setMenu(false); });
 
-  startEl.addEventListener("change", render);
-  endEl.addEventListener("change", render);
+  /* Completed orders in the chosen range come from history.php */
+  function load() {
+    if (!startEl.value || !endEl.value || startEl.value > endEl.value) { orders = []; render(); return; }
+    Cafe.api.getHistory(startEl.value, endEl.value, "completed")
+      .then(function (list) { orders = list; render(); })
+      .catch(function (err) { ui.toast(err.message || "Could not load orders."); });
+  }
 
-  Cafe.api.getOrders()
-    .then(function (list) { orders = list; render(); })
-    .catch(function (err) { ui.toast(err.message || "Could not load orders."); });
+  startEl.addEventListener("change", load);
+  endEl.addEventListener("change", load);
+
+  /* The menu is needed first: it tells which category each item name belongs to */
   render();
+  Cafe.api.getMenu()
+    .catch(function (err) { ui.toast(err.message || "Could not load the menu."); })
+    .then(load);
 })();
