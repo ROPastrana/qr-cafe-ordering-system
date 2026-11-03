@@ -1538,15 +1538,33 @@ function DeclineReasonModal({ order, onClose }: { order: Order; onClose: () => v
 }
 
 // ── Order History Screen ──────────────────────────────────────────────────────
-function OrderHistory({ orders }: { orders: Order[] }) {
+function OrderHistory({ onUnauthorized }: { onUnauthorized: () => void }) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [from, setFrom] = useState(() => localDate(new Date(Date.now() - 6 * 86400000)));
+  const [to, setTo] = useState(() => localDate(new Date()));
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "declined">("all");
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [reasonOrder, setReasonOrder] = useState<Order | null>(null);
 
-  const historical = orders.filter((o) => o.status === "completed" || o.status === "declined").sort((a, b) => b.id - a.id);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`${API}/history.php?from=${from}&to=${to}`)
+      .then(async (res) => {
+        if (res.status === 401) { onUnauthorized(); return; }
+        const data = await res.json().catch(() => null);
+        if (!cancelled && res.ok && Array.isArray(data)) setOrders(data.map(parseOrder));
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [from, to]);
+
+  const historical = [...orders].sort((a, b) => b.id - a.id);
   const filtered = historical.filter((o) => {
-    const matchSearch = !search || `#${o.id}`.includes(search) || o.customer.toLowerCase().includes(search.toLowerCase()) || o.type.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || (o.code ?? String(o.id)).includes(search.replace("#", "")) || o.customer.toLowerCase().includes(search.toLowerCase()) || o.type.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -1555,6 +1573,11 @@ function OrderHistory({ orders }: { orders: Order[] }) {
       <TopBar title="Order History" subtitle="Lookup and review completed orders" />
       <div className="history-content" style={{ padding: "20px 32px", flex: 1, overflowY: "auto" }}>
         <div className="history-filters" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, backgroundColor: "white" }}>
+            <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} style={{ border: "none", outline: "none", fontSize: 13, fontFamily: "inherit" }} />
+            <span style={{ color: C.textMuted }}>–</span>
+            <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} style={{ border: "none", outline: "none", fontSize: 13, fontFamily: "inherit" }} />
+          </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Order ID, table..." style={{ flex: 1, maxWidth: 320, padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 13, outline: "none" }} onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)} onBlur={(e) => (e.currentTarget.style.borderColor = C.border)} />
           <div style={{ display: "flex", marginLeft: "auto" }}>
             {(["all", "completed", "declined"] as const).map((f, i) => (
@@ -1599,7 +1622,7 @@ function OrderHistory({ orders }: { orders: Order[] }) {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: "40px", textAlign: "center", color: C.textMuted, fontSize: 14 }}>No orders found.</td></tr>
+                <tr><td colSpan={7} style={{ padding: "40px", textAlign: "center", color: C.textMuted, fontSize: 14 }}>{loading ? "Loading..." : "No orders found."}</td></tr>
               )}
             </tbody>
           </table>
@@ -1613,16 +1636,25 @@ function OrderHistory({ orders }: { orders: Order[] }) {
 }
 
 // ── Sales Report Screen ───────────────────────────────────────────────────────
-function SalesReport({ orders, menu }: { orders: Order[]; menu: MenuItem[] }) {
+function SalesReport({ menu, onUnauthorized }: { menu: MenuItem[]; onUnauthorized: () => void }) {
   const today = new Date();
-  const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0]);
-  const [endDate, setEndDate] = useState(today.toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(localDate(new Date(today.getFullYear(), today.getMonth(), 1)));
+  const [endDate, setEndDate] = useState(localDate(today));
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const inRange = orders.filter((o) => {
-    if (o.status !== "completed") return false;
-    const d = o.createdAt.toISOString().split("T")[0];
-    return d >= startDate && d <= endDate;
-  });
+  const [inRange, setInRange] = useState<Order[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API}/history.php?status=completed&from=${startDate}&to=${endDate}`)
+      .then(async (res) => {
+        if (res.status === 401) { onUnauthorized(); return; }
+        const data = await res.json().catch(() => null);
+        if (!cancelled && res.ok && Array.isArray(data)) setInRange(data.map(parseOrder));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [startDate, endDate]);
+
   const revenue = inRange.reduce((s, o) => s + o.total, 0);
   const transactions = inRange.length;
   const avgTicket = transactions > 0 ? revenue / transactions : 0;
@@ -1642,14 +1674,20 @@ function SalesReport({ orders, menu }: { orders: Order[]; menu: MenuItem[] }) {
   const topCat = Object.entries(catRevenue).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
   const topCatPct = totalCatRev > 0 ? Math.round((catRevenue[topCat] ?? 0) / totalCatRev * 100) : 0;
   function exportData() {
-    const headers = ["Order ID","Date","Customer","Type","Items","Total","Payment"];
+    // Quote every field, and defuse values Excel would run as a formula
+    const cell = (v: unknown) => {
+      let s = String(v ?? "");
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const headers = ["Order No.", "Date", "Customer", "Type", "Items", "Total", "Payment"];
     const rows = inRange.map((o) => [
-      `#${o.id}`, o.createdAt.toLocaleDateString(), o.customer, o.type,
+      o.code ?? o.id, o.createdAt.toLocaleDateString("en-PH"), o.customer, o.type,
       o.items.map((i) => `${i.qty}x ${i.name}`).join("; "),
       o.total.toFixed(2), o.paymentMethod ?? "",
     ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = "\uFEFF" + [headers, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1682,8 +1720,8 @@ function SalesReport({ orders, menu }: { orders: Order[]; menu: MenuItem[] }) {
         </div>
         <div className="report-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
           <StatCard label="TOTAL REVENUE" value={fmt(revenue)} sub={`${transactions} orders in period`} valueColor={C.orange} />
-          <StatCard label="TRANSACTIONS" value={`${transactions} Orders`} sub="+8.2% vs last week" />
-          <StatCard label="AVERAGE TICKET" value={fmt(avgTicket)} sub="-2.1% vs last week" />
+          <StatCard label="TRANSACTIONS" value={`${transactions} Orders`} sub="Completed orders" />
+          <StatCard label="AVERAGE TICKET" value={fmt(avgTicket)} sub="Per completed order" />
           <StatCard label="TOP PRODUCT CATEGORY" value={topCat || "—"} sub={`${topCatPct}% of overall sales`} valueColor={C.green} large />
         </div>
         <div className="report-details" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -1749,6 +1787,10 @@ function parseOrder(o: any): Order {
     paymentMethod: o.paymentMethod ?? undefined,
     items: o.items.map((i: any) => ({ ...i, variant: i.variant ?? undefined })),
   };
+}
+
+function localDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function parseMenuItem(m: any): MenuItem {
@@ -1975,8 +2017,8 @@ export default function App() {
         {screen === "checkout" && checkoutOrder && (
           <PaymentCheckout order={checkoutOrder} onConfirm={handleCheckoutConfirm} onBack={() => setScreen("manual")} />
         )}
-        {screen === "history" && <OrderHistory orders={orders} />}
-        {screen === "report" && <SalesReport orders={orders} menu={menu} />}
+        {screen === "history" && <OrderHistory onUnauthorized={signOutLocally} />}
+        {screen === "report" && <SalesReport menu={menu} onUnauthorized={signOutLocally} />}
       </main>
 
       {declineTargetId !== null && (
