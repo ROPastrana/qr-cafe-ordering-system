@@ -11,6 +11,7 @@ function fail(int $code, string $msg) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail(405, 'Method not allowed');
 require_csrf();
+rate_limit($pdo, 'login', 20, 600);
 
 $body = json_decode(file_get_contents('php://input'), true);
 $username = trim((string)($body['username'] ?? ''));

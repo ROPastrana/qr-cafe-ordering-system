@@ -42,6 +42,32 @@ function require_csrf(): void {
     }
 }
 
+// Allows $max requests per IP in each $windowSeconds window, then answers 429.
+// Uses REMOTE_ADDR only: X-Forwarded-For can be faked by anyone.
+function rate_limit(PDO $pdo, string $bucket, int $max, int $windowSeconds): void {
+    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+
+    // One atomic statement: start a new window if the old one ended, otherwise count the hit
+    $pdo->prepare(
+        "INSERT INTO tbl_rate_limit (ip, bucket, hits, window_start) VALUES (?, ?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+             hits = IF(window_start <= NOW() - INTERVAL ? SECOND, 1, hits + 1),
+             window_start = IF(window_start <= NOW() - INTERVAL ? SECOND, NOW(), window_start)"
+    )->execute([$ip, $bucket, $windowSeconds, $windowSeconds]);
+
+    $stmt = $pdo->prepare(
+        "SELECT hits, TIMESTAMPDIFF(SECOND, NOW(), window_start + INTERVAL ? SECOND) AS wait
+         FROM tbl_rate_limit WHERE ip = ? AND bucket = ?"
+    );
+    $stmt->execute([$windowSeconds, $ip, $bucket]);
+    $row = $stmt->fetch();
+
+    if ($row && (int)$row['hits'] > $max) {
+        header('Retry-After: ' . max(1, (int)$row['wait']));
+        json_error(429, 'Too many requests. Please wait a few minutes and try again.');
+    }
+}
+
 function require_cashier(): array {
     start_session();
     if (empty($_SESSION['cashier_id'])) json_error(401, 'Please sign in');
