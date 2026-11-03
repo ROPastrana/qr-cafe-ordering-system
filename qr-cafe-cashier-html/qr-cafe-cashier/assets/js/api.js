@@ -12,16 +12,47 @@ Cafe.api = (function () {
 
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-  function csrfHeaders() {
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? { "X-CSRF-Token": meta.content } : {};
+  /* The PHP API answers 403 to any POST/PATCH without an X-CSRF-Token header.
+     The token lives in the PHP session, so it is fetched once from csrf.php and
+     fetched again when the session was reset (logout, expiry). */
+  var CSRF_URL = "/cafe/api/csrf.php";
+  var csrfPromise = null;
+
+  function getCsrfToken() {
+    if (!csrfPromise) {
+      csrfPromise = fetch(CSRF_URL, { credentials: "same-origin", headers: { Accept: "application/json" } })
+        .then(function (res) {
+          if (!res.ok) throw new Error("Could not reach the server (" + res.status + ")");
+          return res.json();
+        })
+        .then(function (json) { return json.token; });
+      csrfPromise.catch(function () { csrfPromise = null; });
+    }
+    return csrfPromise;
+  }
+
+  /* fetch() that adds the CSRF header to writes and retries once on 403.
+     A 403 from the CSRF check means the server did nothing, so a retry is safe. */
+  function apiFetch(url, options, isRetry) {
+    var opts = Object.assign({ credentials: "same-origin" }, options);
+    if ((opts.method || "GET").toUpperCase() === "GET") return fetch(url, opts);
+    return getCsrfToken().then(function (token) {
+      opts.headers = Object.assign({}, opts.headers, { "X-CSRF-Token": token });
+      return fetch(url, opts);
+    }).then(function (res) {
+      if (res.status === 403 && !isRetry) {
+        csrfPromise = null;
+        return apiFetch(url, options, true);
+      }
+      return res;
+    });
   }
 
   function request(method, path, body) {
-    var headers = Object.assign({ Accept: "application/json" }, method === "GET" ? {} : csrfHeaders());
+    var headers = { Accept: "application/json" };
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    return fetch(cfg.API_BASE_URL + path, {
-      method: method, headers: headers, credentials: "same-origin",
+    return apiFetch(cfg.API_BASE_URL + path, {
+      method: method, headers: headers,
       body: body === undefined ? undefined : JSON.stringify(body)
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (json) {
