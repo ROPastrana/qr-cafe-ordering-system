@@ -35,6 +35,8 @@ CREATE TABLE `tbl_cashiers` (
   `username` varchar(50) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `full_name` varchar(100) NOT NULL,
+  `failed_attempts` int(11) NOT NULL DEFAULT 0,
+  `locked_until` datetime DEFAULT NULL,
   PRIMARY KEY (`cashier_id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -46,7 +48,7 @@ CREATE TABLE `tbl_cashiers` (
 
 LOCK TABLES `tbl_cashiers` WRITE;
 /*!40000 ALTER TABLE `tbl_cashiers` DISABLE KEYS */;
-INSERT INTO `tbl_cashiers` VALUES (1,'cashier01','$2y$10$vmTr.OOhb0rsVyibJmSrHOchdxpkxqXSLnQcHntnNi9qyYwyOu5WS','Cashier01');
+INSERT INTO `tbl_cashiers` VALUES (1,'cashier01','$2y$10$vmTr.OOhb0rsVyibJmSrHOchdxpkxqXSLnQcHntnNi9qyYwyOu5WS','Cashier01',0,NULL);
 /*!40000 ALTER TABLE `tbl_cashiers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -208,6 +210,31 @@ LOCK TABLES `tbl_orders` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `tbl_rate_limit`
+--
+
+DROP TABLE IF EXISTS `tbl_rate_limit`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tbl_rate_limit` (
+  `ip` varchar(45) NOT NULL,
+  `bucket` varchar(30) NOT NULL,
+  `hits` int(11) NOT NULL DEFAULT 0,
+  `window_start` datetime NOT NULL,
+  PRIMARY KEY (`ip`,`bucket`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tbl_rate_limit`
+--
+
+LOCK TABLES `tbl_rate_limit` WRITE;
+/*!40000 ALTER TABLE `tbl_rate_limit` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tbl_rate_limit` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `tbl_transactions`
 --
 
@@ -245,6 +272,10 @@ LOCK TABLES `tbl_transactions` WRITE;
 /*!40000 ALTER TABLE `tbl_transactions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `tbl_transactions` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Dumping routines for database 'cafe_pos'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -255,4 +286,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-03 19:22:19
+-- Dump completed on 2026-11-03 19:30:18
