@@ -1,0 +1,15 @@
+# Security headers on every API response
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set Cache-Control "no-store"
+</IfModule>
+
+# Don't list the files in /cafe/api/
+Options -Indexes
+
+# Helper files are only loaded with require (from disk), never opened in a browser
+<FilesMatch "^(db|db\.example|auth|errors|order_lib|payment|queue_lib)\.php$">
+    Require all denied
+</FilesMatch>
