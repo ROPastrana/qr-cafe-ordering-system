@@ -126,11 +126,12 @@ Cafe.modals = (function () {
   }
 
   /* ----------------------------------------------------------------- decline */
-  function decline(orderId, onConfirm) {
+  /* orderLabel: e.g. "#001" from Cafe.orderNo() */
+  function decline(orderLabel, onConfirm) {
     var reason = Cafe.DECLINE_REASONS[0];
     var dialog = Cafe.modal.open(
       '<div class="modal__panel modal__panel--dialog" role="document">' +
-        '<h2 class="dialog__title">Decline Order #' + esc(orderId) + "?</h2>" +
+        '<h2 class="dialog__title">Decline Order ' + esc(orderLabel) + "?</h2>" +
         '<p class="dialog__text">Let the kitchen know why this order can\u2019t be fulfilled. This will notify the customer.</p>' +
         '<div class="dialog__section"><p class="dialog__label">Reason</p><div class="chip-group">' +
           Cafe.DECLINE_REASONS.map(function (r) {
@@ -169,13 +170,17 @@ Cafe.modals = (function () {
     return '<div class="barcode" aria-hidden="true">' + bars + "</div>";
   }
 
-  /* o: { order, discountType, discountAmount, finalTotal, paymentMethod, cashTendered, cashChange, gcashReference } */
+  /* o: { order, discountType, discountAmount, finalTotal, paymentMethod, cashTendered, cashChange, gcashReference,
+          receiptNumber (from pay.php / walkin.php once paid) }
+     Returns the <dialog>, so callers can act when it closes. */
   function receipt(o) {
     var order = o.order, now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
-    var refNo = "RC-" + order.id + "-" + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate());
+    var no = order.code || order.id;
+    var refNo = o.receiptNumber ||
+      (no ? "RC-" + no + "-" + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) : "Issued after payment");
     var meta = [
-      ["Receipt No.", refNo], ["Order ID", "#" + order.id],
+      ["Receipt No.", refNo], ["Order ID", Cafe.orderNo(order)],
       ["Date", Cafe.fmtDate(now)], ["Time", Cafe.fmtTime(now)],
       ["Customer", order.customer], ["Type", order.type]
     ];
@@ -201,7 +206,7 @@ Cafe.modals = (function () {
         '<div class="receipt__row receipt__row--boxed"><span>Change</span><span class="receipt__value--green">' + fmt(Math.max(0, o.cashChange || 0)) + "</span></div>";
     }
 
-    Cafe.modal.open(
+    var dialog = Cafe.modal.open(
       '<div class="modal__panel modal__panel--receipt" role="document">' +
         '<div class="receipt__head">' + closeBtn("btn-icon no-print") +
           '<div class="brand-mark">' + ui.icons.coffee + "</div>" +
@@ -223,9 +228,11 @@ Cafe.modals = (function () {
           '<button type="button" class="btn btn--outline" data-print>Print</button>' +
           '<button type="button" class="btn btn--primary btn--grow" data-modal-close>Done</button>' +
         "</div>" +
-      "</div>").addEventListener("click", function (e) {
-        if (e.target.closest("[data-print]")) window.print();
-      });
+      "</div>");
+    dialog.addEventListener("click", function (e) {
+      if (e.target.closest("[data-print]")) window.print();
+    });
+    return dialog;
   }
 
   /* ------------------------------------------------------------- orderDetail */
@@ -242,7 +249,7 @@ Cafe.modals = (function () {
     Cafe.modal.open(
       '<div class="modal__panel modal__panel--detail" role="document">' +
         '<div class="detail-modal__head"><div>' +
-          '<div class="detail-modal__title"><h2>Order #' + order.id + "</h2>" + ui.typeBadge(order.type) + ui.statusPill(order.status) + "</div>" +
+          '<div class="detail-modal__title"><h2>Order ' + esc(Cafe.orderNo(order)) + "</h2>" + ui.typeBadge(order.type) + ui.statusPill(order.status) + "</div>" +
           '<p class="detail-modal__sub">' + esc(order.customer) + " \u00B7 " + Cafe.fmtDate(order.createdAt, "long") + " \u00B7 " + Cafe.fmtTime(order.createdAt) + "</p>" +
         "</div>" + closeBtn("btn-icon") + "</div>" +
         '<div class="detail-modal__body">' +
@@ -255,7 +262,9 @@ Cafe.modals = (function () {
           "</div>" +
         "</div>" +
         '<div class="detail-modal__foot btn-row no-print">' +
-          '<button type="button" class="btn btn--outline" data-print>Print Receipt</button>' +
+          (order.receiptToken
+            ? '<a class="btn btn--outline" href="/cafe/receipt/index.html?t=' + encodeURIComponent(order.receiptToken) + '" target="_blank" rel="noopener">E-Receipt</a>'
+            : '<button type="button" class="btn btn--outline" data-print>Print Receipt</button>') +
           '<button type="button" class="btn btn--dark btn--grow" data-modal-close>Close</button>' +
         "</div>" +
       "</div>").addEventListener("click", function (e) {
@@ -274,7 +283,7 @@ Cafe.modals = (function () {
     Cafe.modal.open(
       '<div class="modal__panel modal__panel--reason" role="document">' +
         '<div class="reason__bar"></div><div class="reason__body">' +
-          '<div class="reason__head"><div><p class="reason__title">Order #' + order.id + " \u2014 Declined</p>" +
+          '<div class="reason__head"><div><p class="reason__title">Order ' + esc(Cafe.orderNo(order)) + " \u2014 Declined</p>" +
             '<p class="detail-modal__sub">' + esc(order.customer) + " \u00B7 " + esc(order.type) + " \u00B7 " + Cafe.fmtTime(order.createdAt) + "</p></div>" +
             closeBtn("btn-icon") + "</div>" +
           '<div class="reason__items"><p class="eyebrow">Items in Order</p>' + lines +

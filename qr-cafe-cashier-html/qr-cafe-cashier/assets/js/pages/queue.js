@@ -50,7 +50,7 @@
     if (o.items.length > 3) items += '<p class="order-card__item order-card__item--more">+' + (o.items.length - 3) + " more</p>";
 
     return '<article class="order-card' + (o.status === "ready" ? " order-card--ready" : "") + '">' +
-      '<div class="order-card__head"><span class="order-card__id">#' + o.id + "</span>" + ui.typeBadge(o.type) +
+      '<div class="order-card__head"><span class="order-card__id">' + esc(Cafe.orderNo(o)) + "</span>" + ui.typeBadge(o.type) +
         (o.status === "declined" ? '<span class="badge badge--declined">Declined</span>' : "") +
         '<span class="order-card__customer">' + esc(o.customer) + "</span></div>" +
       '<div class="order-card__items">' + items + "</div>" +
@@ -78,29 +78,33 @@
       .catch(function (err) { ui.toast(err.message || "Could not load orders."); });
   }
 
-  function update(id, patch) {
-    return Cafe.api.updateOrder(id, patch).then(load).catch(function (err) { ui.toast(err.message); });
+  /* On a conflict (another cashier got there first) the reload shows the real state. */
+  function setStatus(id, status, reason, note) {
+    return Cafe.api.setStatus(id, status, reason, note)
+      .catch(function (err) { ui.toast(err.message); })
+      .then(load);
   }
 
   grid.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-action]");
     if (!btn) return;
     var id = Number(btn.dataset.id);
+    var order = orders.find(function (o) { return o.id === id; });
 
     switch (btn.dataset.action) {
       case "accept":   /* review + settle payment first */
         window.location.href = "workspace.html?id=" + id; break;
       case "ready":
-        update(id, { status: "ready" }); break;
+        setStatus(id, "ready"); break;
       case "complete":
-        update(id, { status: "completed", completedAt: new Date() }); break;
+        setStatus(id, "completed"); break;
       case "decline":
-        Cafe.modals.decline(id, function (reason, note) {
-          update(id, { status: "declined", declineReason: reason, declineNote: note || undefined });
+        Cafe.modals.decline(Cafe.orderNo(order), function (reason, note) {
+          setStatus(id, "declined", reason, note);
         });
         break;
       case "receipt":
-        Cafe.modals.orderDetail(orders.find(function (o) { return o.id === id; })); break;
+        Cafe.modals.orderDetail(order); break;
     }
   });
 

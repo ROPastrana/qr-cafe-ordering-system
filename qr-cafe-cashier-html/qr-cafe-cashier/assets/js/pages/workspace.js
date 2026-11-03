@@ -35,7 +35,7 @@
     listEl.innerHTML = pending.map(function (o) {
       var names = o.items.map(function (i) { return i.name; }).join(", ");
       return '<button type="button" class="order-pick" data-id="' + o.id + '" aria-current="' + (order && o.id === order.id) + '">' +
-        '<div class="order-pick__row"><span class="order-pick__id">Order #' + o.id + "</span>" + ui.typeBadge(o.type) + "</div>" +
+        '<div class="order-pick__row"><span class="order-pick__id">Order ' + esc(Cafe.orderNo(o)) + "</span>" + ui.typeBadge(o.type) + "</div>" +
         '<p class="order-pick__name">' + esc(o.customer) + "</p>" +
         '<p class="order-pick__items">' + esc(names.slice(0, 36)) + (names.length > 36 ? "\u2026" : "") + "</p></button>";
     }).join("");
@@ -84,7 +84,7 @@
     }).join("");
 
     detailEl.innerHTML =
-      '<div class="detail-head"><div class="detail-head__title"><h2>Order #' + order.id + "</h2>" + ui.typeBadge(order.type) + "</div>" +
+      '<div class="detail-head"><div class="detail-head__title"><h2>Order ' + esc(Cafe.orderNo(order)) + "</h2>" + ui.typeBadge(order.type) + "</div>" +
         '<span class="detail-status">Status: ' + order.status.charAt(0).toUpperCase() + order.status.slice(1) + "</span></div>" +
       '<p class="detail-meta">' + esc(order.customer) + " \u00B7 Received " + Cafe.fmtTime(order.createdAt) + " \u00B7 " + Cafe.timeAgo(order.createdAt) + "</p>" +
       '<div class="rule"></div><h3 class="section-heading">Order Items Breakdown</h3>' + items +
@@ -177,19 +177,21 @@
     if (e.target.id === "gcash-ref")  { state.gcashRef = e.target.value; }
   });
 
+  /* pay.php recomputes the discount and total from the saved items; the receipt shows its numbers. */
   function completePayment(btn) {
-    var f = figures();
-    var patch = { status: "preparing", paymentMethod: state.method };
-    if (state.discount) {            /* keep the discount on the saved order so reports match the receipt */
-      patch.discountType = state.discount;
-      patch.discount = f.discount;
-      patch.total = f.final;
-    }
-    if (state.method === "gcash" && state.gcashRef) patch.gcashReference = state.gcashRef.trim();
+    var payment = { method: state.method, discountType: state.discount || null };
+    if (state.method === "cash") payment.cashTendered = figures().cash;
+    else payment.gcashRef = state.gcashRef.trim();
 
     btn.disabled = true;
-    Cafe.api.updateOrder(order.id, patch)
-      .then(function () { window.location.href = "queue.html"; })
+    Cafe.api.pay(order, payment)
+      .then(function (r) {
+        Cafe.modals.receipt({
+          order: order, discountType: state.discount, discountAmount: r.discount, finalTotal: r.total,
+          paymentMethod: r.method, cashTendered: r.amountPaid, cashChange: r.change,
+          gcashReference: payment.gcashRef, receiptNumber: r.receiptNumber
+        }).addEventListener("close", function () { window.location.href = "queue.html"; });
+      })
       .catch(function (err) { btn.disabled = false; ui.toast(err.message || "Could not save the payment."); });
   }
 })();
