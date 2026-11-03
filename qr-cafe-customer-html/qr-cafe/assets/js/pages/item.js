@@ -52,6 +52,10 @@
     if (item.hasServe) {
       html += optionGroup("Serve",
         Cafe.SERVE_OPTIONS.map(function (v) { return pill("serve", v, "pill--serve"); }).join(""));
+    } else if (item.fixedTemp) {
+      /* Hot-only / iced-only drink: show it, but there is nothing to choose */
+      html += optionGroup("Serve",
+        '<span class="pill pill--serve" aria-pressed="true">' + ui.escapeHtml(item.fixedTemp) + " only</span>");
     }
     el.options.innerHTML = html;
   }

@@ -1,0 +1,2 @@
+# Classes are only loaded with require (from disk), never opened in a browser
+Require all denied

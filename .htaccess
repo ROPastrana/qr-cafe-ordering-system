@@ -1,0 +1,7 @@
+# Browsers must re-check pages, scripts and styles with Apache before reusing them
+# (unchanged files come back as a quick 304), so an update never mixes old and new files.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|js|css)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>

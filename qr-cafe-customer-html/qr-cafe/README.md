@@ -5,13 +5,15 @@ React + Vite project. No framework and no build step is needed to run it.
 
 ## Run it (XAMPP)
 
-1. Copy this folder to `C:\xampp\htdocs\qr-cafe\`
-2. Start **Apache** in the XAMPP Control Panel
-3. Open `http://localhost/qr-cafe/`
+1. Set up the repository and database as described in the main `README.md`
+   (the repository lives at `C:\xampp\htdocs\cafe`)
+2. Start **Apache** and **MySQL** in the XAMPP Control Panel
+3. Open `http://localhost/cafe/qr-cafe-customer-html/qr-cafe/`
+   (on a phone: the laptop's IP address instead of `localhost`)
 
-Any static server works too (`php -S localhost:8000`, VS Code Live Server).
 Use `http://`, not `file://`, so session storage and navigation behave
-consistently.
+consistently. With `USE_MOCK_DATA: true` the pages also run on any static
+server with demo data.
 
 ## Pages
 
@@ -80,47 +82,20 @@ The colour palette lives in the `@theme` block (`--color-cafe-accent`, …).
 
 ## Connecting the PHP / MySQL back end
 
-In `assets/js/config.js` set `USE_MOCK_DATA: false`. The pages then call
-`api.js`, which expects:
+`assets/js/config.js` has `USE_MOCK_DATA: false`, so the pages call the PHP API
+in `/cafe/api` (see the main `README.md` in the repository root). `api.js` is the
+only file that talks to it:
 
-**GET `api/menu`** → `{ "data": [ ... ] }` where each row is either the
-front-end shape (`id, name, description, price, image, category, popular,
-hasSize, hasSugar, hasServe`) or the DB shape (`item_id, item_name,
-description, base_price, image_url, category_name, is_available`).
+| Page | Call |
+| --- | --- |
+| menu, item, cart | `GET menu.php` |
+| cart | `POST orders.php` `{ name, orderType, items: [{ itemId, qty, size, sugarLevel, serve }] }` → `{ orderCode, total, trackToken }` |
+| order status | `GET track.php?t=<trackToken>` every 5 s → `{ status, declineReason, declineNote, receiptToken }` |
 
-**POST `api/orders`** (JSON, with `X-CSRF-Token` if a `csrf-token` meta tag is
-present):
-
-```json
-{
-  "customer_name": "Maria",
-  "order_type": "self_order",
-  "service_type": "Dine In",
-  "items": [
-    { "item_id": 1, "quantity": 2, "size": "Large",
-      "sugar_level": "50%", "temperature": "Hot" }
-  ]
-}
-```
-
-→ `{ "data": { "order_id": 12, "order_code": "A-104" } }`
-
-The browser shows prices for display only. The server must look up
-`tbl_menu_items.base_price`, apply the size surcharge, and compute the total
-itself (Section J: server validation against price manipulation).
-
-## Gaps between the UI and the data dictionary
-
-These are not blockers for the front end, but the schema needs a decision:
-
-- **Dine In / Take Out** has no column in `tbl_orders`.
-- **Popular items** and per-item **has size / sugar / serve** flags (e.g.
-  "Served hot only") have no columns in `tbl_menu_items`. `api.js` falls back
-  to "drinks have size and sugar; pastries have none".
-- **Size surcharge** (Small −₱20, Large +₱20) is defined in `data.js` and must
-  be mirrored on the server.
-- Item ids are numeric to match `item_id`; the original React code used
-  strings such as `"c1"`.
+POST requests carry an `X-CSRF-Token` header; `apiFetch()` gets the token from
+`csrf.php`. The browser shows prices for display only: `orders.php` looks up
+every price in `tbl_menu_items`, applies the size surcharge and computes the
+total itself. Set `USE_MOCK_DATA: true` to run the pages without PHP.
 
 ## What changed from the React version
 
@@ -132,5 +107,4 @@ These are not blockers for the front end, but the schema needs a decision:
 - Buttons that only navigate are now `<a>` links.
 - User-entered text is HTML-escaped before it is inserted into the page.
 - The cart merges identical lines (same item, size, sugar, serve), same as before.
-- "Simulate Declined Order (Demo)" is shown only when `USE_MOCK_DATA` is true.
 - Menu photos still load from Unsplash, as in the original.

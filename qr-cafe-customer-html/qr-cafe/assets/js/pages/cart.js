@@ -4,14 +4,13 @@
 (function () {
   var ui = Cafe.ui;
   var store = Cafe.store;
-  var cfg = Cafe.config;
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
     empty: $("cart-empty"), emptyTitle: $("cart-empty-title"), filled: $("cart-filled"),
     items: $("cart-items"), total: $("cart-total-amount"), name: $("customer-name"),
     type: $("order-type"), footer: $("cart-footer"), error: $("cart-error"),
-    place: $("place-order"), decline: $("simulate-decline")
+    place: $("place-order")
   };
 
   var byId = new Map();
@@ -68,7 +67,6 @@
 
     el.place.textContent = "Place Order \u00b7 " + form.orderType + " \u2192";
     el.place.disabled = !canPlace();
-    el.decline.disabled = !canPlace();
   }
 
   function render() {
@@ -91,7 +89,7 @@
     el.error.hidden = !msg;
   }
 
-  function submit(simulateDecline) {
+  function submit() {
     if (!canPlace()) return;
     var list = rows();
     var name = form.name.trim();
@@ -104,7 +102,6 @@
     Cafe.api.placeOrder({
       customerName: name,
       serviceType: form.orderType,
-      simulateDecline: Boolean(simulateDecline),
       items: list.map(function (r) {
         return {
           itemId: r.item.id, qty: r.line.qty,
@@ -125,10 +122,11 @@
         store.setOrder({
           orderNum: result.orderNum,
           status: result.status,
+          trackToken: result.trackToken,
           name: name,
           orderType: form.orderType,
           items: lines,
-          total: total
+          total: result.total != null ? result.total : total   /* the server's price wins */
         });
         store.clearCart();
         store.setForm({ name: "", orderType: form.orderType });
@@ -168,13 +166,11 @@
     syncForm();
   });
 
-  el.place.addEventListener("click", function () { submit(false); });
-  el.decline.addEventListener("click", function () { submit(true); });
+  el.place.addEventListener("click", submit);
 
   /* ---- Init ---- */
   buildOrderType();
   el.name.value = form.name;
-  el.decline.hidden = !cfg.USE_MOCK_DATA; /* demo-only control */
 
   Cafe.api.getMenu()
     .then(function (menu) {

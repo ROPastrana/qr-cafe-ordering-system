@@ -11,9 +11,40 @@ Cafe.api = (function () {
 
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-  function csrfHeaders() {
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? { "X-CSRF-Token": meta.content } : {};
+  /* The PHP API answers 403 to any POST/PATCH without an X-CSRF-Token header.
+     The token lives in the PHP session, so it is fetched once from csrf.php and
+     fetched again when the session was reset (logout, expiry). */
+  var CSRF_URL = "/cafe/api/csrf.php";
+  var csrfPromise = null;
+
+  function getCsrfToken() {
+    if (!csrfPromise) {
+      csrfPromise = fetch(CSRF_URL, { credentials: "same-origin", headers: { Accept: "application/json" } })
+        .then(function (res) {
+          if (!res.ok) throw new Error("Could not reach the server (" + res.status + ")");
+          return res.json();
+        })
+        .then(function (json) { return json.token; });
+      csrfPromise.catch(function () { csrfPromise = null; });
+    }
+    return csrfPromise;
+  }
+
+  /* fetch() that adds the CSRF header to writes and retries once on 403.
+     A 403 from the CSRF check means the server did nothing, so a retry is safe. */
+  function apiFetch(url, options, isRetry) {
+    var opts = Object.assign({ credentials: "same-origin" }, options);
+    if ((opts.method || "GET").toUpperCase() === "GET") return fetch(url, opts);
+    return getCsrfToken().then(function (token) {
+      opts.headers = Object.assign({}, opts.headers, { "X-CSRF-Token": token });
+      return fetch(url, opts);
+    }).then(function (res) {
+      if (res.status === 403 && !isRetry) {
+        csrfPromise = null;
+        return apiFetch(url, options, true);
+      }
+      return res;
+    });
   }
 
   /* Accepts the front-end shape OR the DB column names from tbl_menu_items. */
@@ -35,6 +66,7 @@ Cafe.api = (function () {
       hasSize: flag(r.hasSize, r.has_size, isDrink),
       hasSugar: flag(r.hasSugar, r.has_sugar, isDrink),
       hasServe: flag(r.hasServe, r.has_serve, false),
+      fixedTemp: r.fixedTemp || r.fixed_temp || null,   /* "Hot" | "Cold" for hot-only / iced-only drinks */
       available: flag(r.available, r.is_available, true)
     };
   }
@@ -45,7 +77,7 @@ Cafe.api = (function () {
     if (cfg.USE_MOCK_DATA) {
       menuPromise = Promise.resolve(Cafe.MENU.slice());
     } else {
-      menuPromise = fetch(cfg.API_BASE_URL + "/menu", { headers: { Accept: "application/json" } })
+      menuPromise = fetch(cfg.API_BASE_URL + "/menu.php", { headers: { Accept: "application/json" } })
         .then(function (res) {
           if (!res.ok) throw new Error("Menu request failed (" + res.status + ")");
           return res.json();
@@ -63,52 +95,63 @@ Cafe.api = (function () {
   /*
    * order = {
    *   customerName, serviceType ("Dine In" | "Take Out"),
-   *   items: [{ itemId, qty, size, sugarLevel, serve }],
-   *   simulateDecline (mock mode only)
+   *   items: [{ itemId, qty, size, sugarLevel, serve }]
    * }
-   * resolves -> { orderNum, status: "received" | "declined" }
+   * resolves -> { orderNum, status, total, trackToken }
+   *   total is the server's price (null in mock mode); trackToken is used with track.php
    */
   function placeOrder(order) {
     if (cfg.USE_MOCK_DATA) {
       return wait(300).then(function () {
         return {
           orderNum: String(Math.floor(100 + Math.random() * 900)),
-          status: order.simulateDecline ? "declined" : "received"
+          status: "pending",
+          total: null,
+          trackToken: null
         };
       });
     }
 
+    /* Field names match api/orders.php; the server looks up every price itself. */
     var body = {
-      customer_name: order.customerName,
-      order_type: "self_order",
-      service_type: order.serviceType,
+      name: order.customerName,
+      orderType: order.serviceType,
       items: order.items.map(function (i) {
-        return {
-          item_id: i.itemId,
-          quantity: i.qty,
-          size: i.size,
-          sugar_level: i.sugarLevel,
-          temperature: i.serve
-        };
+        return { itemId: i.itemId, qty: i.qty, size: i.size, sugarLevel: i.sugarLevel, serve: i.serve };
       })
     };
 
-    return fetch(cfg.API_BASE_URL + "/orders", {
+    return apiFetch(cfg.API_BASE_URL + "/orders.php", {
       method: "POST",
-      headers: Object.assign({ "Content-Type": "application/json", Accept: "application/json" }, csrfHeaders()),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(body)
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (json) {
-          if (!res.ok) throw new Error(json.message || "Could not place your order. Please try again.");
+          if (!res.ok) throw new Error(json.error || "Could not place your order. Please try again.");
           return json;
         });
       })
       .then(function (json) {
-        var d = json.data || json;
-        return { orderNum: String(d.order_code || d.order_id), status: "received" };
+        return { orderNum: json.orderCode, status: "pending", total: json.total, trackToken: json.trackToken };
       });
   }
 
-  return { getMenu: getMenu, placeOrder: placeOrder };
+  /* resolves -> { code, status, declineReason, declineNote, receiptToken } (api/track.php)
+     status: pending | preparing | ready | completed | declined */
+  function trackOrder(trackToken) {
+    return fetch(cfg.API_BASE_URL + "/track.php?t=" + encodeURIComponent(trackToken), { headers: { Accept: "application/json" } })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (json) {
+          if (!res.ok) {
+            var err = new Error(json.error || "Could not check your order (" + res.status + ")");
+            err.status = res.status;
+            throw err;
+          }
+          return json;
+        });
+      });
+  }
+
+  return { getMenu: getMenu, placeOrder: placeOrder, trackOrder: trackOrder };
 })();

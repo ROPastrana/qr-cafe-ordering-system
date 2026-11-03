@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#111113">
-    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
-         <meta name="csrf-token" content="..."> -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -60,17 +58,18 @@
         </div>
 
         <!-- Received: next steps -->
-        <div id="card-received" class="status-card" hidden>
+        <!-- Not declined: what to do next (text set by assets/js/pages/order-status.js) -->
+        <div id="card-received" class="status-card" hidden aria-live="polite">
           <p class="status-card__title">Next Steps</p>
-          <p class="status-card__text">1. Your drinks &amp; pastries are being prepared fresh now.</p>
-          <p class="status-card__text">2. Please proceed to the counter to pay. Your order will be sent to the kitchen once payment is confirmed.</p>
+          <p id="next-step" class="status-card__text"></p>
         </div>
 
-        <!-- Declined: reason -->
-        <div id="card-declined" class="status-card" hidden>
+        <!-- Declined: reason and the cashier's note -->
+        <div id="card-declined" class="status-card" hidden aria-live="polite">
           <p class="status-card__title">Order Declined</p>
           <p class="status-card__text">We're sorry — the café was unable to fulfill this order.</p>
-          <p class="status-card__text">Reason: Kitchen closing for the day.</p>
+          <p id="decline-reason" class="status-card__text"></p>
+          <p id="decline-note" class="status-card__text" hidden></p>
           <p class="status-card__text">No payment has been charged. Please check with the counter if you have questions.</p>
         </div>
 
@@ -84,6 +83,7 @@
           </div>
         </div>
 
+        <a id="receipt-link" class="btn-primary btn-primary--block mb-3" href="#" hidden>View Receipt</a>
         <a id="back-to-menu" class="btn-primary btn-primary--block" href="menu.html">Back to Menu</a>
       </div>
     </main>

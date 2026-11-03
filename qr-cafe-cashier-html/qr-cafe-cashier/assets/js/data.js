@@ -121,6 +121,12 @@ Cafe.seedOrders = function () {
 };
 
 /* ---- Formatting -------------------------------------------------------- */
+/* "#001": the order code the customer sees on their phone (demo orders only have an id) */
+Cafe.orderNo = function (order) {
+  var no = order.code || order.id;
+  return no ? "#" + no : "New order";   /* a walk-in has no number until walkin.php saves it */
+};
+
 Cafe.fmt = function (n) {
   return "₱" + Number(n).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };

@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2b1810">
-    <!-- When the PHP backend is connected, add a server-generated CSRF token here:
-         <meta name="csrf-token" content="..."> -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -34,13 +32,14 @@
             <label class="sr-only" for="search">Search orders</label>
             <input id="search" class="search-input" type="search" placeholder="Search Order ID, table...">
             <div id="status-filter" class="filter-group" role="group" aria-label="Filter by status"></div>
+            <div id="sort-order" class="filter-group" role="group" aria-label="Sort orders"></div>
           </div>
 
           <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th scope="col">ORDER ID</th><th scope="col">TIME</th><th scope="col">TYPE</th>
+                  <th scope="col">ORDER ID</th><th scope="col">DATE &amp; TIME</th><th scope="col">TYPE</th>
                   <th scope="col">ITEMS SUMMARY</th><th scope="col">TOTAL</th><th scope="col">STATUS</th><th scope="col">ACTIONS</th>
                 </tr>
               </thead>

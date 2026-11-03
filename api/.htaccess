@@ -1,0 +1,18 @@
+# Security headers on every API response
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+    # PHP may send its own Cache-Control (sessions, track.php); keep just one
+    Header unset Cache-Control
+    Header always set Cache-Control "no-store"
+</IfModule>
+
+# Don't list the files in /cafe/api/
+Options -Indexes
+
+# The database login is only loaded with require (from disk), never opened in a browser.
+# The classes in src/ are blocked by src/.htaccess.
+<FilesMatch "^(db|db\.example)\.php$">
+    Require all denied
+</FilesMatch>

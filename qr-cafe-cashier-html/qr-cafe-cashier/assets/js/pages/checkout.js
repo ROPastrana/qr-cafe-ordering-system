@@ -31,7 +31,7 @@
     }).join("");
 
     summaryEl.innerHTML =
-      '<div class="checkout-summary__head"><h2>Order #' + order.id + " Settle</h2>" + ui.typeBadge(order.type) + "</div>" +
+      '<div class="checkout-summary__head"><h2>Settle Walk-in Order</h2>' + ui.typeBadge(order.type) + "</div>" +
       '<div class="rule"></div>' + items +
       '<div class="totals">' +
         (order.discount > 0
@@ -121,19 +121,35 @@
     if (e.target.id === "gcash-ref")  { state.gcashRef = e.target.value; }
   });
 
+  /* walkin.php re-prices the cart from the database and saves the order and payment together. */
   function confirmPayment(btn) {
-    var payload = Object.assign({}, order, { status: "preparing", paymentMethod: state.method });
-    if (state.method === "gcash" && state.gcashRef) payload.gcashReference = state.gcashRef.trim();
+    var form = store.getForm();
+    var walkIn = {
+      name: form.customerName.trim(),
+      orderType: order.type,
+      items: store.getCart().map(function (e) {
+        return { itemId: e.itemId, qty: e.qty, size: e.size || null, sugarLevel: e.sugarLevel || null, serve: e.temp || null };
+      })
+    };
+    var payment = { method: state.method, discountType: order.discountType || null };
+    if (state.method === "cash") payment.cashTendered = figures().cash;
+    else payment.gcashRef = state.gcashRef.trim();
 
     btn.disabled = true;
-    Cafe.api.createOrder(payload)
-      .then(function () {
+    Cafe.api.walkIn(walkIn, payment, order)
+      .then(function (r) {
+        /* Saved: clear the cart now so going back cannot submit it twice */
         store.clearCart();
         store.clearCheckout();
-        var form = store.getForm();
         form.customerName = "";
         store.setForm(form);
-        window.location.href = "queue.html";
+
+        Cafe.modals.receipt({
+          order: Object.assign({}, order, { code: r.orderCode }), discountType: order.discountType,
+          discountAmount: r.discount, finalTotal: r.total, paymentMethod: r.method,
+          cashTendered: r.amountPaid, cashChange: r.change, gcashReference: payment.gcashRef,
+          receiptNumber: r.receiptNumber
+        }).addEventListener("close", function () { window.location.href = "queue.html"; });
       })
       .catch(function (err) { btn.disabled = false; ui.toast(err.message || "Could not save the order."); });
   }
