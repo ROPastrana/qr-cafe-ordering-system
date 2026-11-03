@@ -132,5 +132,4 @@ These are not blockers for the front end, but the schema needs a decision:
 - Buttons that only navigate are now `<a>` links.
 - User-entered text is HTML-escaped before it is inserted into the page.
 - The cart merges identical lines (same item, size, sugar, serve), same as before.
-- "Simulate Declined Order (Demo)" is shown only when `USE_MOCK_DATA` is true.
 - Menu photos still load from Unsplash, as in the original.

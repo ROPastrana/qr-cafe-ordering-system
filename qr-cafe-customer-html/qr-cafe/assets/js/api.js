@@ -95,8 +95,7 @@ Cafe.api = (function () {
   /*
    * order = {
    *   customerName, serviceType ("Dine In" | "Take Out"),
-   *   items: [{ itemId, qty, size, sugarLevel, serve }],
-   *   simulateDecline (mock mode only)
+   *   items: [{ itemId, qty, size, sugarLevel, serve }]
    * }
    * resolves -> { orderNum, status, total, trackToken }
    *   total is the server's price (null in mock mode); trackToken is used with track.php
@@ -106,7 +105,7 @@ Cafe.api = (function () {
       return wait(300).then(function () {
         return {
           orderNum: String(Math.floor(100 + Math.random() * 900)),
-          status: order.simulateDecline ? "declined" : "pending",
+          status: "pending",
           total: null,
           trackToken: null
         };
