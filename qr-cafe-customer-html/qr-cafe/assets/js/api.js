@@ -98,47 +98,43 @@ Cafe.api = (function () {
    *   items: [{ itemId, qty, size, sugarLevel, serve }],
    *   simulateDecline (mock mode only)
    * }
-   * resolves -> { orderNum, status: "received" | "declined" }
+   * resolves -> { orderNum, status, total, trackToken }
+   *   total is the server's price (null in mock mode); trackToken is used with track.php
    */
   function placeOrder(order) {
     if (cfg.USE_MOCK_DATA) {
       return wait(300).then(function () {
         return {
           orderNum: String(Math.floor(100 + Math.random() * 900)),
-          status: order.simulateDecline ? "declined" : "received"
+          status: order.simulateDecline ? "declined" : "pending",
+          total: null,
+          trackToken: null
         };
       });
     }
 
+    /* Field names match api/orders.php; the server looks up every price itself. */
     var body = {
-      customer_name: order.customerName,
-      order_type: "self_order",
-      service_type: order.serviceType,
+      name: order.customerName,
+      orderType: order.serviceType,
       items: order.items.map(function (i) {
-        return {
-          item_id: i.itemId,
-          quantity: i.qty,
-          size: i.size,
-          sugar_level: i.sugarLevel,
-          temperature: i.serve
-        };
+        return { itemId: i.itemId, qty: i.qty, size: i.size, sugarLevel: i.sugarLevel, serve: i.serve };
       })
     };
 
-    return apiFetch(cfg.API_BASE_URL + "/orders", {
+    return apiFetch(cfg.API_BASE_URL + "/orders.php", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(body)
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (json) {
-          if (!res.ok) throw new Error(json.message || "Could not place your order. Please try again.");
+          if (!res.ok) throw new Error(json.error || "Could not place your order. Please try again.");
           return json;
         });
       })
       .then(function (json) {
-        var d = json.data || json;
-        return { orderNum: String(d.order_code || d.order_id), status: "received" };
+        return { orderNum: json.orderCode, status: "pending", total: json.total, trackToken: json.trackToken };
       });
   }
 

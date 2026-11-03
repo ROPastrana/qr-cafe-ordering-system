@@ -125,10 +125,11 @@
         store.setOrder({
           orderNum: result.orderNum,
           status: result.status,
+          trackToken: result.trackToken,
           name: name,
           orderType: form.orderType,
           items: lines,
-          total: total
+          total: result.total != null ? result.total : total   /* the server's price wins */
         });
         store.clearCart();
         store.setForm({ name: "", orderType: form.orderType });
