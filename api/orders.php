@@ -23,7 +23,7 @@ if (!$serviceType) fail(400, 'Invalid order type');
 try {
     $pdo->beginTransaction();
     $cart = price_cart($pdo, $body['items'] ?? null);
-    [, $code] = create_order($pdo, $name, 'self_order', $serviceType, null, $cart);
+    [, $code, $trackToken] = create_order($pdo, $name, 'self_order', $serviceType, null, $cart);
     $pdo->commit();
 } catch (ApiException $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
@@ -35,4 +35,4 @@ try {
 }
 
 http_response_code(201);
-echo json_encode(['orderCode' => $code, 'total' => $cart['subtotal']]);
+echo json_encode(['orderCode' => $code, 'total' => $cart['subtotal'], 'trackToken' => $trackToken]);

@@ -67,12 +67,13 @@ function create_order(PDO $pdo, ?string $customerName, string $orderType, string
     }
 
     $tmpCode = 'T' . bin2hex(random_bytes(8));   // replaced below once the id is known
+    $trackToken = bin2hex(random_bytes(16));      // secret the customer's phone uses to follow the order
     $pdo->prepare(
         "INSERT INTO tbl_orders
-           (order_code, customer_id, cashier_id, order_type, service_type,
+           (order_code, track_token, customer_id, cashier_id, order_type, service_type,
             order_status, subtotal, total_amount)
-         VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)"
-    )->execute([$tmpCode, $customerId, $cashierId, $orderType, $serviceType,
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
+    )->execute([$tmpCode, $trackToken, $customerId, $cashierId, $orderType, $serviceType,
                 $cart['subtotal'], $cart['subtotal']]);
     $orderId = (int)$pdo->lastInsertId();
 
@@ -88,5 +89,5 @@ function create_order(PDO $pdo, ?string $customerName, string $orderType, string
     $code = str_pad((string)$orderId, 3, '0', STR_PAD_LEFT);
     $pdo->prepare("UPDATE tbl_orders SET order_code = ? WHERE order_id = ?")->execute([$code, $orderId]);
 
-    return [$orderId, $code];
+    return [$orderId, $code, $trackToken];
 }
