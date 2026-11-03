@@ -36,6 +36,7 @@ Cafe.ui = (function () {
     if (item.hasSize)  parts.push(line.size);
     if (item.hasSugar) parts.push(line.sugarLevel);
     if (item.hasServe) parts.push(line.serve);
+    else if (item.fixedTemp) parts.push(item.fixedTemp);
     return parts.length ? parts.join(" \u2022 ") : "Warmed";
   }
 

@@ -66,6 +66,7 @@ Cafe.api = (function () {
       hasSize: flag(r.hasSize, r.has_size, isDrink),
       hasSugar: flag(r.hasSugar, r.has_sugar, isDrink),
       hasServe: flag(r.hasServe, r.has_serve, false),
+      fixedTemp: r.fixedTemp || r.fixed_temp || null,   /* "Hot" | "Cold" for hot-only / iced-only drinks */
       available: flag(r.available, r.is_available, true)
     };
   }
@@ -76,7 +77,7 @@ Cafe.api = (function () {
     if (cfg.USE_MOCK_DATA) {
       menuPromise = Promise.resolve(Cafe.MENU.slice());
     } else {
-      menuPromise = fetch(cfg.API_BASE_URL + "/menu", { headers: { Accept: "application/json" } })
+      menuPromise = fetch(cfg.API_BASE_URL + "/menu.php", { headers: { Accept: "application/json" } })
         .then(function (res) {
           if (!res.ok) throw new Error("Menu request failed (" + res.status + ")");
           return res.json();
