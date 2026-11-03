@@ -56,7 +56,7 @@
       '<div class="order-card__items">' + items + "</div>" +
       (o.status === "declined" && o.declineReason ? '<p class="order-card__reason">Reason: ' + esc(o.declineReason) + "</p>" : "") +
       '<div class="order-card__foot' + (open ? " order-card__foot--spaced" : "") + '">' +
-        '<span class="order-card__total">' + Cafe.fmt(o.subtotal) + "</span>" +
+        '<span class="order-card__total">' + Cafe.fmt(o.total) + "</span>" +   /* after any discount */
         '<span class="order-card__time">' + Cafe.timeAgo(o.createdAt) + "</span></div>" +
       actionsHtml(o) + "</article>";
   }
