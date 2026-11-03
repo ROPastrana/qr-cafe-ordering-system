@@ -6,13 +6,14 @@ Companion to the customer module (`qr-cafe`).
 
 ## Run it (XAMPP)
 
-1. Copy this folder to `C:\xampp\htdocs\qr-cafe-cashier\`
-2. Start **Apache** in the XAMPP Control Panel
-3. Open `http://localhost/qr-cafe-cashier/`
-4. Click **Sign In to POS** (demo mode accepts the prefilled credentials)
+1. Set up the repository and database as described in the main `README.md`
+   (the repository lives at `C:\xampp\htdocs\cafe`)
+2. Start **Apache** and **MySQL** in the XAMPP Control Panel
+3. Open `http://localhost/cafe/qr-cafe-cashier-html/qr-cafe-cashier/`
+4. Sign in with a cashier account from `tbl_cashiers`
 
-Any static server works too (`php -S localhost:8000`, VS Code Live Server).
-Use `http://`, not `file://`.
+Use `http://`, not `file://`. With `USE_MOCK_DATA: true` the pages also run on
+any static server with demo data and accept any credentials.
 
 ## Pages
 
@@ -86,43 +87,31 @@ npm run watch:css      # rebuild on save
 
 ## Connecting the PHP / MySQL back end
 
-In `assets/js/config.js` set `USE_MOCK_DATA: false`. `api.js` then calls
-(JSON, same-origin cookies, `X-CSRF-Token` header on writes when a
-`csrf-token` meta tag exists):
+`assets/js/config.js` has `USE_MOCK_DATA: false`, so the pages call the PHP API
+in `/cafe/api` (see the main `README.md` in the repository root). `api.js` is the
+only file that talks to it, one function per endpoint:
 
-| Call | Purpose |
-| --- | --- |
-| `POST api/auth/login` `{username, password}` → `{name, role}` | start PHP session; 401 + `{message}` on failure |
-| `POST api/auth/logout` | end session |
-| `GET api/menu` | menu items |
-| `GET api/orders` | all of today's orders |
-| `POST api/orders` | create a walk-in order (starts as `preparing`) |
-| `PATCH api/orders/{id}` | change status, payment, discount, decline info |
+| `Cafe.api.` | Endpoint | Used by |
+| --- | --- | --- |
+| `login` / `logout` | `POST login.php` / `POST logout.php` | login page, sidebar |
+| `getMenu` | `GET menu.php` (mapped to `isDrink` / `tempOptions`) | manual entry, report |
+| `getOrders` | `GET queue.php` (open orders + today's finished ones) | queue, workspace |
+| `setStatus` | `PATCH status.php` `{ id, status, reason, note }` | queue |
+| `pay` | `POST pay.php` `{ orderId, method, cashTendered / gcashRef, discountType }` | workspace |
+| `walkIn` | `POST walkin.php` (order + payment in one step) | checkout |
+| `getHistory` | `GET history.php?from=&to=&status=` | history, report |
 
-**Order JSON** (responses; `createdAt` / `completedAt` are ISO-8601 strings):
+Orders come back as `{ id, code, customer, type, items, subtotal, total, status,
+createdAt, completedAt, paymentMethod, receiptToken, declineReason, declineNote }`
+with `status` `new | preparing | ready | completed | declined`. Screens show
+`code` (`#001`, the number the customer sees); `id` is used for actions.
 
-```json
-{
-  "id": 186, "customer": "Maya R.", "type": "Dine In",
-  "items": [{ "name": "Spanish Latte", "qty": 1, "unitPrice": 200,
-              "variant": "Large · 50% Sugar · Cold" }],
-  "subtotal": 370, "discount": 74, "discountType": "PWD", "total": 296,
-  "status": "new", "note": "…", "createdAt": "2026-11-02T08:15:00+08:00",
-  "completedAt": null, "paymentMethod": "cash", "gcashReference": "1234567890",
-  "declineReason": "Out of Stock", "declineNote": "…"
-}
-```
-
-`status`: `new | preparing | ready | completed | declined`.
-`type`: `Dine In | Take Out`. `paymentMethod`: `cash | gcash`.
-**Menu JSON**: `{ id, name, description, category, price, image, isDrink, tempOptions }`
-(`tempOptions`: `both | hot-only | cold-only`).
-
-**The server must not trust the browser.** Recompute prices (base price +
-size adjustment), the 20% discount and the total from the database, check the
-session and role on every request, and validate status changes (e.g. only
-`new → preparing | declined`, `preparing → ready`, `ready → completed`).
-The login guard in `layout.js` is only for convenience.
+POST / PATCH requests carry an `X-CSRF-Token` header from `csrf.php`. The server
+checks the session on every request, recomputes prices, the 20% discount and the
+total from the database, and only allows `new → preparing` (by paying) or
+`declined`, `preparing → ready`, `ready → completed`. A 401 sends the browser
+back to the login page; the login guard in `layout.js` is only for convenience.
+Set `USE_MOCK_DATA: true` to run the pages without PHP.
 
 ## Small behavior changes from the React version
 
@@ -141,14 +130,11 @@ The login guard in `layout.js` is only for convenience.
 - Dialogs use native `<dialog>`: Esc closes them and focus is trapped.
 - Demo mode resets the sample orders each time you sign in.
 
-## Still to decide (unchanged from the design)
+## Still open
 
-- "Mark as Paid" does not check that cash tendered covers the total.
-- The "+8.2% / −2.1% vs last week" lines on the report are hard-coded.
 - Discounts are applied without capturing a PWD / Senior / Student ID number.
-- This menu (16 items, e.g. latte ₱190) differs from the customer module's
-  menu (15 items, latte ₱149). With `USE_MOCK_DATA: false` both should read the
-  same `tbl_menu_items` through `GET api/menu`.
-- Confirm the schema has columns for: Dine In / Take Out, discount type and
-  amount, payment method, GCash reference, decline reason and note.
+- The demo menu in `data.js` (16 items) is only used with `USE_MOCK_DATA: true`;
+  the real screens use `tbl_menu_items` through `menu.php`, like the customer app.
+- On the sales report, the category bars and top items show amounts before
+  discounts, while Total Revenue is after discounts.
 - Menu photos load from Unsplash, as in the original.
