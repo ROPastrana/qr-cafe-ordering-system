@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 02, 2026 at 07:41 AM
+-- Generation Time: Nov 03, 2026 at 03:55 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -95,29 +95,30 @@ CREATE TABLE `tbl_menu_items` (
   `is_popular` tinyint(1) NOT NULL DEFAULT 0,
   `has_size` tinyint(1) NOT NULL DEFAULT 1,
   `has_sugar` tinyint(1) NOT NULL DEFAULT 1,
-  `has_serve` tinyint(1) NOT NULL DEFAULT 1
+  `has_serve` tinyint(1) NOT NULL DEFAULT 1,
+  `fixed_temp` enum('Hot','Cold') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tbl_menu_items`
 --
 
-INSERT INTO `tbl_menu_items` (`item_id`, `category_id`, `item_name`, `description`, `base_price`, `image_url`, `is_available`, `is_popular`, `has_size`, `has_sugar`, `has_serve`) VALUES
-(1, 1, 'Salted Caramel Latte', 'Espresso with steamed oat milk and housemade sea-salted caramel syrup.', 149.00, 'https://images.unsplash.com/photo-1495774856032-8b90bbb32b32?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 1),
-(2, 1, 'Spanish Latte', 'Double shot espresso, sweet condensed milk, and velvety textured fresh milk.', 145.00, 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 1),
-(3, 1, 'Cold Brew Honey Oat', '18-hour slow steeped specialty Arabica beans with cold oat milk and wild honey.', 159.00, 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0),
-(4, 1, 'Classic Cappuccino', 'A shot of espresso balanced with equal parts steamed milk and a thick cap of warm foam, dusted with cocoa. Served hot only.', 129.00, 'https://images.unsplash.com/photo-1497636577773-f1231844b336?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0),
-(5, 1, 'Velvet Flat White', 'Two ristretto shots topped with a silky layer of velvety microfoam for a smooth, full-bodied finish.', 139.00, 'https://images.unsplash.com/photo-1529892485617-25f63cd7b1e9?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 1),
-(6, 2, 'Uji Matcha Latte', 'Ceremonial grade Japanese Uji green tea, stone-milled and whisked to a fine foam, then poured over creamy steamed oat milk.', 159.00, 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 1),
-(7, 2, 'Hibiscus Berry Iced Tea', 'Premium brewed hibiscus tea shaken hard with organic strawberry puree and fresh lemon, poured over crushed ice. Served iced only.', 139.00, 'https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 0),
-(8, 2, 'Belgian Hot Chocolate', 'Steamed fresh milk melted with real dark Belgian chocolate callets for a thick, glossy cup. Served hot only.', 149.00, 'https://images.unsplash.com/photo-1648192312898-838f9b322f47?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0),
-(9, 2, 'Hokkaido Taro Milk Tea', 'Creamy Hokkaido taro root blended with slow-brewed black tea and slow-cooked brown sugar for a mellow, nutty finish.', 129.00, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 1),
-(10, 2, 'Peach Blossom Oolong', 'Loose-leaf high mountain oolong shaken with organic peach nectar and fresh mint leaves over ice. Served iced only.', 119.00, 'https://images.unsplash.com/photo-1601390395693-364c0e22031a?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0),
-(11, 3, 'Pistachio Rose Croissant', 'Flaky twice-baked butter croissant loaded with thick pistachio frangipane, crushed Sicilian pistachios and dried rose petals.', 129.00, 'https://images.unsplash.com/photo-1623334044303-241021148842?w=400&h=400&fit=crop&auto=format', 1, 1, 0, 0, 0),
-(12, 3, 'Pain au Chocolat', 'Classic French pastry of butter-laminated dough folded around two batons of dark chocolate, baked to a deep golden crust.', 99.00, 'https://images.unsplash.com/photo-1773894470970-2908e13f3940?w=400&h=400&fit=crop&auto=format', 1, 1, 0, 0, 0),
-(13, 3, 'Blueberry Cream Cheese Danish', 'Crisp puff pastry nest filled with sweet blueberry compote and whipped cream cheese, finished with a vanilla glaze.', 119.00, 'https://images.unsplash.com/photo-1702742322469-36315505728f?w=400&h=400&fit=crop&auto=format', 1, 0, 0, 0, 0),
-(14, 3, 'Salted Caramel Pecan Bun', 'Soft cinnamon yeast roll topped with warm salted caramel and roasted pecans, baked fresh every morning.', 109.00, 'https://images.unsplash.com/photo-1583527976767-5399024eeb05?w=400&h=400&fit=crop&auto=format', 1, 0, 0, 0, 0),
-(15, 3, 'Basque Burnt Cheesecake', 'Deeply caramelized crustless cheesecake with a custardy, semi-liquid centre. Best paired with a black coffee.', 159.00, 'https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=400&h=400&fit=crop&auto=format', 1, 0, 0, 0, 0);
+INSERT INTO `tbl_menu_items` (`item_id`, `category_id`, `item_name`, `description`, `base_price`, `image_url`, `is_available`, `is_popular`, `has_size`, `has_sugar`, `has_serve`, `fixed_temp`) VALUES
+(1, 1, 'Salted Caramel Latte', 'Espresso with steamed oat milk and housemade sea-salted caramel syrup.', 149.00, 'https://images.unsplash.com/photo-1495774856032-8b90bbb32b32?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 1, NULL),
+(2, 1, 'Spanish Latte', 'Double shot espresso, sweet condensed milk, and velvety textured fresh milk.', 145.00, 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 1, NULL),
+(3, 1, 'Cold Brew Honey Oat', '18-hour slow steeped specialty Arabica beans with cold oat milk and wild honey.', 159.00, 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0, 'Cold'),
+(4, 1, 'Classic Cappuccino', 'A shot of espresso balanced with equal parts steamed milk and a thick cap of warm foam, dusted with cocoa. Served hot only.', 129.00, 'https://images.unsplash.com/photo-1497636577773-f1231844b336?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0, 'Hot'),
+(5, 1, 'Velvet Flat White', 'Two ristretto shots topped with a silky layer of velvety microfoam for a smooth, full-bodied finish.', 139.00, 'https://images.unsplash.com/photo-1529892485617-25f63cd7b1e9?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 1, NULL),
+(6, 2, 'Uji Matcha Latte', 'Ceremonial grade Japanese Uji green tea, stone-milled and whisked to a fine foam, then poured over creamy steamed oat milk.', 159.00, 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 1, NULL),
+(7, 2, 'Hibiscus Berry Iced Tea', 'Premium brewed hibiscus tea shaken hard with organic strawberry puree and fresh lemon, poured over crushed ice. Served iced only.', 139.00, 'https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=400&h=400&fit=crop&auto=format', 1, 1, 1, 1, 0, 'Cold'),
+(8, 2, 'Belgian Hot Chocolate', 'Steamed fresh milk melted with real dark Belgian chocolate callets for a thick, glossy cup. Served hot only.', 149.00, 'https://images.unsplash.com/photo-1648192312898-838f9b322f47?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0, 'Hot'),
+(9, 2, 'Hokkaido Taro Milk Tea', 'Creamy Hokkaido taro root blended with slow-brewed black tea and slow-cooked brown sugar for a mellow, nutty finish.', 129.00, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 1, NULL),
+(10, 2, 'Peach Blossom Oolong', 'Loose-leaf high mountain oolong shaken with organic peach nectar and fresh mint leaves over ice. Served iced only.', 119.00, 'https://images.unsplash.com/photo-1601390395693-364c0e22031a?w=400&h=400&fit=crop&auto=format', 1, 0, 1, 1, 0, 'Cold'),
+(11, 3, 'Pistachio Rose Croissant', 'Flaky twice-baked butter croissant loaded with thick pistachio frangipane, crushed Sicilian pistachios and dried rose petals.', 129.00, 'https://images.unsplash.com/photo-1623334044303-241021148842?w=400&h=400&fit=crop&auto=format', 1, 1, 0, 0, 0, NULL),
+(12, 3, 'Pain au Chocolat', 'Classic French pastry of butter-laminated dough folded around two batons of dark chocolate, baked to a deep golden crust.', 99.00, 'https://images.unsplash.com/photo-1773894470970-2908e13f3940?w=400&h=400&fit=crop&auto=format', 1, 1, 0, 0, 0, NULL),
+(13, 3, 'Blueberry Cream Cheese Danish', 'Crisp puff pastry nest filled with sweet blueberry compote and whipped cream cheese, finished with a vanilla glaze.', 119.00, 'https://images.unsplash.com/photo-1702742322469-36315505728f?w=400&h=400&fit=crop&auto=format', 1, 0, 0, 0, 0, NULL),
+(14, 3, 'Salted Caramel Pecan Bun', 'Soft cinnamon yeast roll topped with warm salted caramel and roasted pecans, baked fresh every morning.', 109.00, 'https://images.unsplash.com/photo-1583527976767-5399024eeb05?w=400&h=400&fit=crop&auto=format', 1, 0, 0, 0, 0, NULL),
+(15, 3, 'Basque Burnt Cheesecake', 'Deeply caramelized crustless cheesecake with a custardy, semi-liquid centre. Best paired with a black coffee.', 159.00, 'https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=400&h=400&fit=crop&auto=format', 1, 0, 0, 0, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -129,6 +130,7 @@ DROP TABLE IF EXISTS `tbl_orders`;
 CREATE TABLE `tbl_orders` (
   `order_id` int(11) NOT NULL,
   `order_code` varchar(20) NOT NULL,
+  `track_token` varchar(32) DEFAULT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `cashier_id` int(11) DEFAULT NULL,
   `order_type` enum('self_order','walk_in') NOT NULL,
@@ -218,6 +220,7 @@ ALTER TABLE `tbl_menu_items`
 ALTER TABLE `tbl_orders`
   ADD PRIMARY KEY (`order_id`),
   ADD UNIQUE KEY `order_code` (`order_code`),
+  ADD UNIQUE KEY `track_token` (`track_token`),
   ADD KEY `fk_orders_customer` (`customer_id`),
   ADD KEY `fk_orders_cashier` (`cashier_id`),
   ADD KEY `idx_orders_status` (`order_status`),
