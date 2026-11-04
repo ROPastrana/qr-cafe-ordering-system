@@ -267,9 +267,10 @@
   .summary-row   { @apply flex justify-between text-[13px] text-cafe-text; }
   .summary-total { @apply flex items-center justify-between border-t border-cafe-border pt-2.5 text-[14px] font-bold text-cafe-text; }
 
-  /* "Your order" bar on the menu and cart pages (assets/js/order-bar.js) */
+  /* "Your orders" bar on the menu and cart pages: one row per order (assets/js/order-bar.js) */
+  .order-bars { @apply mx-4 mt-3 mb-2 flex shrink-0 flex-col gap-2; }
   .order-bar {
-    @apply mx-4 mt-3 mb-2 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-cafe-warm-border bg-cafe-warm px-4 py-3 transition-opacity duration-150 hover:opacity-85;
+    @apply flex items-center justify-between gap-3 rounded-2xl border border-cafe-warm-border bg-cafe-warm px-4 py-3 transition-opacity duration-150 hover:opacity-85;
   }
   .order-bar__text   { @apply flex flex-col; }
   .order-bar__title  { @apply text-[14px] font-bold text-cafe-text; }
@@ -387,9 +388,9 @@
     .cart-items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
     /* Same width as the content below it */
-    .order-bar { margin-inline: 2rem; }
+    .order-bars { margin-inline: 2rem; }
     @media (min-width: 1100px) {
-      .order-bar { width: calc(100% - 6rem); max-width: 1184px; margin-inline: auto; }
+      .order-bars { width: calc(100% - 6rem); max-width: 1184px; margin-inline: auto; }
     }
   }
 

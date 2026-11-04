@@ -9,7 +9,8 @@
   var ui = Cafe.ui;
   var store = Cafe.store;
   var cfg = Cafe.config;
-  var order = store.getOrder();
+  /* order-status.html?order=015 shows that order; without ?order=, the newest one */
+  var order = store.getOrder(new URLSearchParams(window.location.search).get("order"));
 
   if (!order) {
     window.location.replace("menu.html");
@@ -146,12 +147,12 @@
     poll();
   });
 
-  /* "Back to Menu" resets to the Coffee tab. The order is only forgotten once it is
+  /* "Back to Menu" resets to the Coffee tab. This order is only forgotten once it is
      finished (completed or declined); an open order stays, and the menu shows a bar
-     that leads back here. */
+     that leads back here. Other orders on this phone are not affected. */
   $("back-to-menu").addEventListener("click", function () {
     store.setCategory("Coffee");
-    if (FINAL[order.status]) store.clearOrder();
+    if (FINAL[order.status]) store.clearOrder(order.orderNum);
   });
 
   render();

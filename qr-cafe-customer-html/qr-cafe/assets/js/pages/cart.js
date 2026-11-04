@@ -148,7 +148,7 @@
         store.clearCart();
         store.setForm({ name: "", orderType: form.orderType });
         /* replace(): the phone's back button then skips the now-empty cart */
-        window.location.replace("order-status.html");
+        window.location.replace("order-status.html?order=" + encodeURIComponent(result.orderNum));
       })
       .catch(function (err) {
         submitting = false;

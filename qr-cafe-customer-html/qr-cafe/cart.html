@@ -22,14 +22,8 @@
         <p class="page-subtitle mt-0.5">Review and confirm your table order</p>
       </div>
 
-      <!-- Link back to an order already placed (filled by assets/js/order-bar.js) -->
-      <a id="order-bar" class="order-bar" href="order-status.html" hidden>
-        <span class="order-bar__text">
-          <span class="order-bar__title" data-order-title></span>
-          <span class="order-bar__status" data-order-status></span>
-        </span>
-        <span class="order-bar__action">View →</span>
-      </a>
+      <!-- Links back to orders already placed, one row each (filled by assets/js/order-bar.js) -->
+      <nav id="order-bar" class="order-bars" aria-label="Your orders" hidden></nav>
 
       <div class="cart-content">
         <!-- Empty state -->
