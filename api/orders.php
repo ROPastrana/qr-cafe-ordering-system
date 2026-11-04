@@ -17,7 +17,7 @@ if ($requestId !== null && (!is_string($requestId) || !preg_match('/^[A-Za-z0-9-
     throw new ApiException(400, 'Invalid request id');
 }
 
-$name = trim((string)($body['name'] ?? ''));
+$name = trim(Request::text($body, 'name'));
 if ($name === '' || mb_strlen($name) > 100) throw new ApiException(400, 'Please enter a name (up to 100 characters)');
 $serviceType = OrderService::serviceType($body['orderType'] ?? '');
 

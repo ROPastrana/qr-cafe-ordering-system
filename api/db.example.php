@@ -1,9 +1,10 @@
 <?php
 // Copy this file to db.php and fill in your MySQL login. db.php is git-ignored.
+// Use the limited cafe_app account from database/create_app_user.sql, not root.
 $host = 'localhost';
 $dbname = 'cafe_pos';
-$user = 'your_mysql_username';
-$pass = 'your_mysql_password';
+$user = 'cafe_app';
+$pass = 'the_password_you_set_in_create_app_user.sql';
 
 try {
     $pdo = new PDO(

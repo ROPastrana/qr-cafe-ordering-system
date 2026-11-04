@@ -48,7 +48,8 @@ final class PaymentService {
                 $change = round($tendered - $total, 2);
                 $ref = null;
             } else {
-                $ref = trim((string)($in['gcashRef'] ?? ''));
+                $ref = $in['gcashRef'] ?? '';
+                $ref = is_string($ref) ? trim($ref) : '';   // an array or number fails the check below
                 if (!preg_match('/^[0-9]{10,13}$/', $ref)) {
                     throw new PayException(400, 'Enter the GCash reference number (10 to 13 digits)');
                 }

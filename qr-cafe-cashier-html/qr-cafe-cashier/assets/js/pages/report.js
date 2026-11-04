@@ -71,8 +71,11 @@
       var pct = Math.round((rev / totalCat) * 100);
       return '<div class="bar-row"><div class="bar-row__head"><span class="bar-row__label">' + esc(cat) + " (" + pct + '%)</span>' +
         '<span class="bar-row__value">' + fmt(rev) + "</span></div>" +
-        '<div class="bar"><div class="bar__fill' + (FILL[cat] || "") + '" style="width:' + pct + '%"></div></div></div>';
+        '<div class="bar"><div class="bar__fill' + (FILL[cat] || "") + '" data-pct="' + pct + '"></div></div></div>';
     }).join("");
+    /* Widths are set from script, not with style="" in the HTML: the Content-Security-Policy
+       blocks inline style attributes, but allows styles set through element.style */
+    barsEl.querySelectorAll("[data-pct]").forEach(function (fill) { fill.style.width = fill.dataset.pct + "%"; });
 
     var top = Object.keys(itemRevenue).map(function (n) { return [n, itemRevenue[n]]; })
       .sort(function (a, b) { return b[1].revenue - a[1].revenue; }).slice(0, 6);

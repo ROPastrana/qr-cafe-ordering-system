@@ -12,6 +12,6 @@ $id = filter_var($body['id'] ?? null, FILTER_VALIDATE_INT);
 if (!$id) throw new ApiException(400, 'Missing order id');
 
 (new OrderService(Database::connection()))
-    ->changeStatus($id, $body['status'] ?? '', $body['reason'] ?? '', $body['note'] ?? '');
+    ->changeStatus($id, $body['status'] ?? '', $body['reason'] ?? '', Request::text($body, 'note'));
 
 Response::json(['ok' => true, 'status' => $body['status']]);

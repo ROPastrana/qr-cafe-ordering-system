@@ -8,7 +8,7 @@ Request::requireMethod('POST');
 Session::requireCsrf();
 
 $body = Request::json();
-$name = trim((string)($body['name'] ?? ''));
+$name = trim(Request::text($body, 'name'));
 if (mb_strlen($name) > 100) throw new ApiException(400, 'Name is too long (100 characters max)');
 $serviceType = OrderService::serviceType($body['orderType'] ?? '');
 

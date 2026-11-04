@@ -13,7 +13,18 @@ final class Request {
         return [];
     }
 
+    // A query-string value. ?t[]=x sends an array instead of text; that counts as missing,
+    // so it never reaches a (string) cast (which would raise an "Array to string" warning).
     public static function query(string $name, string $default = ''): string {
-        return (string)($_GET[$name] ?? $default);
+        $value = $_GET[$name] ?? $default;
+        return is_string($value) ? $value : $default;
+    }
+
+    // A text field from the JSON body: '' when missing or null, 400 when it is not text
+    // (for example {"name": ["x"]} or {"name": 5}).
+    public static function text(array $body, string $key): string {
+        $value = $body[$key] ?? '';
+        if (!is_string($value)) throw new ApiException(400, 'Invalid request');
+        return $value;
     }
 }
