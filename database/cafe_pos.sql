@@ -180,6 +180,7 @@ CREATE TABLE `tbl_orders` (
   `order_id` int(11) NOT NULL AUTO_INCREMENT,
   `order_code` varchar(20) NOT NULL,
   `track_token` varchar(32) DEFAULT NULL,
+  `idempotency_key` varchar(36) DEFAULT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `cashier_id` int(11) DEFAULT NULL,
   `order_type` enum('self_order','walk_in') NOT NULL,
@@ -195,6 +196,7 @@ CREATE TABLE `tbl_orders` (
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `order_code` (`order_code`),
   UNIQUE KEY `track_token` (`track_token`),
+  UNIQUE KEY `idempotency_key` (`idempotency_key`),
   KEY `fk_orders_customer` (`customer_id`),
   KEY `fk_orders_cashier` (`cashier_id`),
   KEY `idx_orders_status` (`order_status`),
@@ -290,4 +292,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-03 19:37:21
+-- Dump completed on 2026-11-04 12:50:16
