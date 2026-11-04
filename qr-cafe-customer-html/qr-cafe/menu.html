@@ -28,14 +28,8 @@
         <div id="category-tabs" class="tabs" role="tablist" aria-label="Menu categories"></div>
       </header>
 
-      <!-- Link back to an order already placed (filled by assets/js/order-bar.js) -->
-      <a id="order-bar" class="order-bar" href="order-status.html" hidden>
-        <span class="order-bar__text">
-          <span class="order-bar__title" data-order-title></span>
-          <span class="order-bar__status" data-order-status></span>
-        </span>
-        <span class="order-bar__action">View →</span>
-      </a>
+      <!-- Links back to orders already placed, one row each (filled by assets/js/order-bar.js) -->
+      <nav id="order-bar" class="order-bars" aria-label="Your orders" hidden></nav>
 
       <!-- Menu items (filled by assets/js/pages/menu.js) -->
       <div id="menu-scroll" class="menu-scroll" aria-live="polite">

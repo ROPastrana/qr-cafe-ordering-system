@@ -1,14 +1,14 @@
 /* ==========================================================================
-   "Your order" bar on the menu and cart pages.
-   While this phone has a placed order (see Cafe.store.getOrder), shows
-   "Order #012 · Preparing   View →" linking back to order-status.html, so a
-   customer who left the status page can always return to it (and its receipt).
-   Shows the last known status at once, then asks track.php once for the latest.
-   Needs an element <a id="order-bar" hidden> with the parts filled in below.
+   "Your orders" bar on the menu and cart pages.
+   For each order this phone has placed (see Cafe.store.getOrders), shows a row
+   "Order #012 · Being prepared   View →" linking to order-status.html?order=012,
+   so a customer who left a status page can always return to it (and its receipt).
+   Shows the last known statuses at once, then asks track.php once per order.
+   Needs an empty <nav id="order-bar" hidden> in the page.
    ========================================================================== */
 (function () {
-  var bar = document.getElementById("order-bar");
-  if (!bar) return;
+  var box = document.getElementById("order-bar");
+  if (!box) return;
   var store = Cafe.store;
 
   var LABELS = {
@@ -19,33 +19,55 @@
     declined:  "Declined"
   };
 
-  function show(order) {
-    bar.querySelector("[data-order-title]").textContent = "Order #" + order.orderNum;
-    bar.querySelector("[data-order-status]").textContent = LABELS[order.status] || LABELS.pending;
-    bar.classList.toggle("order-bar--ready", order.status === "ready");
-    bar.hidden = false;
+  /* One row; text goes in with textContent only */
+  function row(order) {
+    var a = document.createElement("a");
+    a.className = "order-bar" + (order.status === "ready" ? " order-bar--ready" : "");
+    a.href = "order-status.html?order=" + encodeURIComponent(order.orderNum);
+
+    var text = document.createElement("span");
+    text.className = "order-bar__text";
+    var title = document.createElement("span");
+    title.className = "order-bar__title";
+    title.textContent = "Order #" + order.orderNum;
+    var status = document.createElement("span");
+    status.className = "order-bar__status";
+    status.textContent = LABELS[order.status] || LABELS.pending;
+    text.append(title, status);
+
+    var action = document.createElement("span");
+    action.className = "order-bar__action";
+    action.textContent = "View →";
+
+    a.append(text, action);
+    return a;
+  }
+
+  function show() {
+    var orders = store.getOrders();
+    box.replaceChildren.apply(box, orders.map(row));
+    box.hidden = orders.length === 0;
   }
 
   function refresh() {
-    var order = store.getOrder();
-    if (!order) { bar.hidden = true; return; }
-    show(order);
-
-    if (!order.trackToken) return;   /* mock mode: nothing to ask */
-    Cafe.api.trackOrder(order.trackToken)
-      .then(function (t) {
-        order.status = t.status;
-        order.declineReason = t.declineReason;
-        order.declineNote = t.declineNote;
-        order.receiptToken = t.receiptToken;
-        store.setOrder(order);
-        show(order);
-      })
-      .catch(function (err) {
-        /* 404: the order no longer exists on the server, so stop offering it */
-        if (err.status === 404) { store.clearOrder(); bar.hidden = true; }
-        /* other errors (offline, server busy): keep showing the last known status */
-      });
+    show();
+    store.getOrders().forEach(function (order) {
+      if (!order.trackToken) return;   /* mock mode: nothing to ask */
+      Cafe.api.trackOrder(order.trackToken)
+        .then(function (t) {
+          order.status = t.status;
+          order.declineReason = t.declineReason;
+          order.declineNote = t.declineNote;
+          order.receiptToken = t.receiptToken;
+          store.setOrder(order);
+          show();
+        })
+        .catch(function (err) {
+          /* 404: the order no longer exists on the server, so stop offering it */
+          if (err.status === 404) { store.clearOrder(order.orderNum); show(); }
+          /* other errors (offline, server busy): keep showing the last known status */
+        });
+    });
   }
 
   refresh();
