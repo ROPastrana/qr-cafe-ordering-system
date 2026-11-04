@@ -147,7 +147,8 @@
         requestId = null;
         store.clearCart();
         store.setForm({ name: "", orderType: form.orderType });
-        window.location.href = "order-status.html";
+        /* replace(): the phone's back button then skips the now-empty cart */
+        window.location.replace("order-status.html");
       })
       .catch(function (err) {
         submitting = false;

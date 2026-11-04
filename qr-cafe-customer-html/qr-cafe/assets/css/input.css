@@ -267,6 +267,17 @@
   .summary-row   { @apply flex justify-between text-[13px] text-cafe-text; }
   .summary-total { @apply flex items-center justify-between border-t border-cafe-border pt-2.5 text-[14px] font-bold text-cafe-text; }
 
+  /* "Your order" bar on the menu and cart pages (assets/js/order-bar.js) */
+  .order-bar {
+    @apply mx-4 mt-3 mb-2 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-cafe-warm-border bg-cafe-warm px-4 py-3 transition-opacity duration-150 hover:opacity-85;
+  }
+  .order-bar__text   { @apply flex flex-col; }
+  .order-bar__title  { @apply text-[14px] font-bold text-cafe-text; }
+  .order-bar__status { @apply text-[12px] text-cafe-sub; }
+  .order-bar__action { @apply shrink-0 text-[13px] font-semibold text-cafe-accent; }
+  .order-bar--ready  { @apply border-cafe-success; }
+  .order-bar--ready .order-bar__status { @apply font-semibold text-cafe-success; }
+
   /* 12. SPLASH PAGE -------------------------------------------------------- */
   .splash-shell { @apply relative overflow-hidden bg-cafe-bg; }
 
@@ -374,6 +385,12 @@
       padding-right: 2rem;
     }
     .cart-items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    /* Same width as the content below it */
+    .order-bar { margin-inline: 2rem; }
+    @media (min-width: 1100px) {
+      .order-bar { width: calc(100% - 6rem); max-width: 1184px; margin-inline: auto; }
+    }
   }
 
   /* 14. DESKTOP (>= 1100px) ------------------------------------------------ */
