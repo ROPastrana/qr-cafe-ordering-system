@@ -17,6 +17,20 @@
   var form = store.getForm();
   var submitting = false;
 
+  /* Request id for this cart: made on the first Place Order tap and sent again when the
+     customer retries after an error, so a retry never creates a second order. Cleared when
+     the cart, name or order type changes, and after a successful order. */
+  var requestId = null;
+
+  /* A random UUID. crypto.randomUUID() needs https; getRandomValues also works on plain http. */
+  function newRequestId() {
+    var b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;   /* version 4 */
+    b[8] = (b[8] & 0x3f) | 0x80;   /* variant */
+    var h = Array.prototype.map.call(b, function (x) { return (x + 256).toString(16).slice(1); }).join("");
+    return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
+  }
+
   /* Cart lines joined with their menu item; lines whose item vanished are skipped. */
   function rows() {
     return store.getCart()
@@ -98,10 +112,12 @@
     showError("");
     syncForm();
     el.place.textContent = "Placing order\u2026";
+    if (!requestId) requestId = newRequestId();
 
     Cafe.api.placeOrder({
       customerName: name,
       serviceType: form.orderType,
+      requestId: requestId,
       items: list.map(function (r) {
         return {
           itemId: r.item.id, qty: r.line.qty,
@@ -128,6 +144,7 @@
           items: lines,
           total: result.total != null ? result.total : total   /* the server's price wins */
         });
+        requestId = null;
         store.clearCart();
         store.setForm({ name: "", orderType: form.orderType });
         window.location.href = "order-status.html";
@@ -144,15 +161,18 @@
     var remove = e.target.closest("[data-remove]");
     var step = e.target.closest("[data-step]");
     if (remove) {
+      requestId = null;
       store.removeLine(remove.dataset.remove);
       render();
     } else if (step) {
+      requestId = null;
       store.updateQty(step.dataset.id, step.dataset.step === "inc" ? 1 : -1);
       render();
     }
   });
 
   el.name.addEventListener("input", function () {
+    requestId = null;
     form.name = el.name.value;
     store.setForm(form);
     syncForm();
@@ -161,6 +181,7 @@
   el.type.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-type]");
     if (!btn) return;
+    if (btn.dataset.type !== form.orderType) requestId = null;
     form.orderType = btn.dataset.type;
     store.setForm(form);
     syncForm();

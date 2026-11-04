@@ -14,9 +14,14 @@ final class OrderRepository {
 
     public function __construct(private PDO $pdo) {}
 
-    // Open orders always, plus anything from today (completed / declined)
+    // Open orders always, plus anything from today (completed / declined).
+    // created_at is compared as a range (not DATE(created_at)) so its index can be used.
     public function queue(): array {
-        return $this->fetch("o.order_status IN ('pending','preparing','ready') OR DATE(o.created_at) = CURDATE()", []);
+        return $this->fetch(
+            "o.order_status IN ('pending','preparing','ready')
+             OR (o.created_at >= CURDATE() AND o.created_at < CURDATE() + INTERVAL 1 DAY)",
+            []
+        );
     }
 
     // Finished orders between two dates (YYYY-MM-DD), newest first.
@@ -24,8 +29,9 @@ final class OrderRepository {
     public function history(string $from, string $to, bool $completedOnly): array {
         $statuses = $completedOnly ? ['completed'] : ['completed', 'declined'];
         $marks = implode(',', array_fill(0, count($statuses), '?'));
+        // From the start of $from up to (not including) the day after $to, as a range on created_at
         return $this->fetch(
-            "o.order_status IN ($marks) AND DATE(o.created_at) BETWEEN ? AND ?",
+            "o.order_status IN ($marks) AND o.created_at >= ? AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)",
             [...$statuses, $from, $to],
             'o.created_at DESC'
         );

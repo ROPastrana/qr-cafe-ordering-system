@@ -24,18 +24,42 @@ final class OrderService {
         return $type;
     }
 
-    // A customer's order from their phone: ['orderCode', 'total', 'trackToken']
-    public function placeSelfOrder(string $name, string $serviceType, mixed $items): array {
+    // A customer's order from their phone.
+    // $requestId (optional) makes a retry safe: the same id returns the order it already
+    // created instead of making a second one.
+    // Returns [['orderCode', 'total', 'trackToken'], true if a new order was created].
+    public function placeSelfOrder(string $name, string $serviceType, mixed $items, ?string $requestId = null): array {
+        if ($requestId !== null && ($existing = $this->findByRequestId($requestId))) return [$existing, false];
+
         $this->pdo->beginTransaction();
         try {
             $cart = $this->priceCart($items);
-            [, $code, $trackToken] = $this->create($name, 'self_order', $serviceType, null, $cart);
+            [, $code, $trackToken] = $this->create($name, 'self_order', $serviceType, null, $cart, $requestId);
             $this->pdo->commit();
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            // The same id sent twice at once: the other request saved the order first
+            if ($requestId !== null && self::isDuplicateKey($e, 'idempotency_key')
+                && ($existing = $this->findByRequestId($requestId))) {
+                return [$existing, false];
+            }
             throw $e;
         }
-        return ['orderCode' => $code, 'total' => $cart['subtotal'], 'trackToken' => $trackToken];
+        return [['orderCode' => $code, 'total' => $cart['subtotal'], 'trackToken' => $trackToken], true];
+    }
+
+    // The answer a request with this id got when it created the order, or null
+    private function findByRequestId(string $requestId): ?array {
+        $stmt = $this->pdo->prepare("SELECT order_code, subtotal, track_token FROM tbl_orders WHERE idempotency_key = ?");
+        $stmt->execute([$requestId]);
+        $row = $stmt->fetch();
+        if (!$row) return null;
+        // subtotal, not total_amount: a discount added at the counter later must not change the answer
+        return ['orderCode' => $row['order_code'], 'total' => (float)$row['subtotal'], 'trackToken' => $row['track_token']];
+    }
+
+    private static function isDuplicateKey(Throwable $e, string $key): bool {
+        return $e instanceof PDOException && $e->getCode() === '23000' && str_contains($e->getMessage(), $key);
     }
 
     // A walk-in order and its payment: both are saved or neither is. Returns the receipt fields.
@@ -138,7 +162,7 @@ final class OrderService {
     // Saves the customer (if any), the order, and its items. The caller owns the transaction.
     // Returns [order id, order code, track token].
     private function create(?string $customerName, string $orderType, string $serviceType,
-                            ?int $cashierId, array $cart): array {
+                            ?int $cashierId, array $cart, ?string $requestId = null): array {
         $customerId = null;
         if ($customerName !== null) {
             $this->pdo->prepare("INSERT INTO tbl_customers (customer_name) VALUES (?)")->execute([$customerName]);
@@ -149,10 +173,10 @@ final class OrderService {
         $trackToken = bin2hex(random_bytes(16));      // secret the customer's phone uses to follow the order
         $this->pdo->prepare(
             "INSERT INTO tbl_orders
-               (order_code, track_token, customer_id, cashier_id, order_type, service_type,
+               (order_code, track_token, idempotency_key, customer_id, cashier_id, order_type, service_type,
                 order_status, subtotal, total_amount)
-             VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
-        )->execute([$tmpCode, $trackToken, $customerId, $cashierId, $orderType, $serviceType,
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
+        )->execute([$tmpCode, $trackToken, $requestId, $customerId, $cashierId, $orderType, $serviceType,
                     $cart['subtotal'], $cart['subtotal']]);
         $orderId = (int)$this->pdo->lastInsertId();
 

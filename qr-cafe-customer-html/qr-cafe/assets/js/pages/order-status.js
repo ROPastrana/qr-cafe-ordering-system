@@ -1,8 +1,9 @@
 /* ==========================================================================
    Order status page – follows the order live through api/track.php
    Reads the order saved by cart.js. No order in session -> back to menu.
-   Polls every TRACK_REFRESH_MS while the page is visible, and stops once the
-   order is completed or declined.
+   Polls every TRACK_REFRESH_MS while the page is visible and every 30 s while
+   it is hidden; stops once the order is completed or declined, or after 3 hours.
+   The phone vibrates when the order becomes ready or declined during the visit.
    ========================================================================== */
 (function () {
   var ui = Cafe.ui;
@@ -83,13 +84,34 @@
   }
 
   /* ---- Live updates ---- */
+  var HIDDEN_REFRESH_MS = 30000;            /* a background tab still checks, just less often */
+  var GIVE_UP_MS = 3 * 60 * 60 * 1000;      /* stop asking after 3 hours on this page */
+  var startedAt = Date.now();
   var timer = null;
-  var busy = false;
+  var inFlight = false;                     /* one request at a time, so two chains can never run */
+
+  /* Vibrate when the order changes to ready or declined during this visit.
+     lastSeen is the status from the previous answer; the first answer only sets it,
+     so a reload on an order that is already ready or declined does not vibrate. */
+  var VIBRATE = { ready: [400], declined: [200, 100, 200] };
+  var lastSeen = null;
+
+  function vibrateOnChange(status) {
+    /* phones without vibration (e.g. iPhone) have no navigator.vibrate and skip this */
+    if (lastSeen !== null && status !== lastSeen && VIBRATE[status] && navigator.vibrate) {
+      navigator.vibrate(VIBRATE[status]);
+    }
+    lastSeen = status;
+  }
+
+  function stopped() {
+    return !order.trackToken || FINAL[order.status] || Date.now() - startedAt >= GIVE_UP_MS;
+  }
 
   function poll() {
     timer = null;
-    if (busy || !order.trackToken || FINAL[order.status]) return;
-    busy = true;
+    if (inFlight || stopped()) return;
+    inFlight = true;
     Cafe.api.trackOrder(order.trackToken)
       .then(function (t) {
         order.status = t.status;
@@ -98,27 +120,29 @@
         order.receiptToken = t.receiptToken;
         store.setOrder(order);
         render();
+        vibrateOnChange(t.status);
       })
       .catch(function (err) {
         /* 404: the order no longer exists, so stop asking. Otherwise keep the last status and retry. */
         if (err.status === 404) order.trackToken = null;
       })
       .then(function () {
-        busy = false;
+        inFlight = false;
         schedule();
       });
   }
 
   function schedule() {
-    if (!timer && !document.hidden && order.trackToken && !FINAL[order.status]) {
-      timer = setTimeout(poll, cfg.TRACK_REFRESH_MS);
+    if (!timer && !stopped()) {
+      timer = setTimeout(poll, document.hidden ? HIDDEN_REFRESH_MS : cfg.TRACK_REFRESH_MS);
     }
   }
 
-  /* Phones pause background tabs: check right away when the customer comes back */
+  /* Check right away when the customer comes back to the tab */
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) return;
     clearTimeout(timer);
+    timer = null;
     poll();
   });
 
