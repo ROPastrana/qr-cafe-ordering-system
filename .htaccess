@@ -4,4 +4,24 @@
     <FilesMatch "\.(html|js|css)$">
         Header set Cache-Control "no-cache"
     </FilesMatch>
+
+    # Security headers for the customer, cashier and receipt pages (the API has its own in api/.htaccess).
+    # Content-Security-Policy: scripts only from our own files (no inline <script>, onclick= or eval),
+    # styles from our files and Google Fonts, images from our server and Unsplash (menu photos),
+    # fetch() only to our own API, and no other site may show our pages in a frame (clickjacking).
+    # If a menu photo is added from another website, add that host to img-src.
+    <FilesMatch "\.html$">
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://images.unsplash.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        Header always set X-Frame-Options "DENY"
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set Referrer-Policy "same-origin"
+    </FilesMatch>
 </IfModule>
+
+# Once HTTPS works on this server (see "Turning on HTTPS" in README.md), remove the # from the
+# four lines below so every http:// visit is sent to https:// instead.
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+# </IfModule>

@@ -72,8 +72,8 @@
     }).join("");
   }
 
-  function load() {
-    return Cafe.api.getOrders()
+  function load(isPoll) {
+    return Cafe.api.getOrders(isPoll === true)
       .then(function (list) { orders = list; render(); })
       .catch(function (err) { ui.toast(err.message || "Could not load orders."); });
   }
@@ -109,5 +109,5 @@
   });
 
   load();
-  setInterval(load, Cafe.config.QUEUE_REFRESH_MS);
+  setInterval(function () { load(true); }, Cafe.config.QUEUE_REFRESH_MS);   /* background refresh */
 })();

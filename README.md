@@ -30,9 +30,17 @@ JavaScript. No framework and no build step is needed to run it.
    ```
    C:\xampp\mysql\bin\mysql.exe -u root < C:\xampp\htdocs\cafe\database\cafe_pos.sql
    ```
-4. Copy `api/db.example.php` to `api/db.php` and enter your MySQL user and
+4. Create the limited database account the API uses: open
+   `database/create_app_user.sql`, replace `CHANGE-ME` with a strong password,
+   and run it as root:
+   ```
+   C:\xampp\mysql\bin\mysql.exe -u root < C:\xampp\htdocs\cafe\database\create_app_user.sql
+   ```
+   It can only read, add and change rows in `cafe_pos` (no deleting, no table
+   changes, no other databases). Put `CHANGE-ME` back before committing.
+5. Copy `api/db.example.php` to `api/db.php` and enter `cafe_app` and that
    password. `db.php` is git-ignored; never commit it.
-5. Open the apps:
+6. Open the apps:
    - Customer: `http://localhost/cafe/qr-cafe-customer-html/qr-cafe/`
    - Cashier: `http://localhost/cafe/qr-cafe-cashier-html/qr-cafe-cashier/`
 
@@ -52,6 +60,31 @@ C:\xampp\php\php.exe -r "echo password_hash('NEW-PASSWORD-HERE', PASSWORD_DEFAUL
 ```sql
 UPDATE tbl_cashiers SET password_hash = '<paste the hash>' WHERE username = 'cashier01';
 ```
+
+Changing a password (or deleting the row) signs that cashier out everywhere on
+their next request.
+
+### Turning on HTTPS (recommended)
+
+Without HTTPS, anyone on the café Wi-Fi can read the cashier's password and
+session cookie. XAMPP already includes Apache's SSL module:
+
+1. Make a certificate for the laptop's IP address with
+   [mkcert](https://github.com/FiloSottile/mkcert) (run in a terminal):
+   ```
+   mkcert -install
+   mkcert 192.168.1.20 localhost
+   ```
+2. Copy the two `.pem` files into `C:\xampp\apache\conf\ssl.crt\` and point
+   `SSLCertificateFile` / `SSLCertificateKeyFile` in
+   `C:\xampp\apache\conf\extra\httpd-ssl.conf` at them. Restart Apache.
+3. Open `https://192.168.1.20/cafe/...`. Phones show a warning unless mkcert's
+   root certificate (`mkcert -CAROOT`) is installed on them.
+4. When it works, remove the `#` from the redirect lines at the bottom of
+   `.htaccess` so `http://` visits move to `https://`.
+
+The PHP code needs no change: over HTTPS the session cookie is automatically
+marked `Secure`.
 
 ## How an order moves
 
@@ -127,16 +160,31 @@ again from the database.
 
 ## Security measures
 
-- Passwords hashed with bcrypt; the same error for a wrong username or password.
-- A cashier account is locked for 5 minutes after 5 wrong passwords.
-- PHP session cookie is `HttpOnly` and `SameSite=Lax`; the session ID is renewed
-  at login and the session expires after 12 hours.
+See [docs/SECURITY-REVIEW.md](docs/SECURITY-REVIEW.md) for the full security
+review and what was fixed.
+
+- Passwords hashed with bcrypt; the same error, the same message and the same
+  response time for a wrong username or a wrong password.
+- 5 wrong passwords lock that username for 5 minutes **for that IP address
+  only**, so a customer can't lock the cashier out. 50 wrong passwords from all
+  addresses together lock the account for 15 minutes.
+- Session cookie `cafe_sid`: `HttpOnly`, `SameSite=Lax`, limited to `/cafe/`,
+  and `Secure` over HTTPS. The session ID is renewed at login; ids the server
+  didn't create are refused (`session.use_strict_mode`).
+- Cashiers are signed out after 30 minutes without activity (the queue's
+  automatic refresh doesn't count), after 12 hours in any case, and at once
+  when their password changes or their account is deleted.
 - Every POST / PATCH needs an `X-CSRF-Token` header that matches the session.
 - Per-IP rate limits: 60 orders and 20 logins per 10 minutes.
-- Prepared statements (PDO) for every query.
+- Prepared statements (PDO) for every query; the API uses a database account
+  that can only SELECT, INSERT and UPDATE.
 - Customers follow orders with a random 128-bit token instead of the order number.
 - `api/.htaccess` blocks direct access to helper files and sends `nosniff`,
   `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and `Cache-Control: no-store`.
+- The pages send a Content-Security-Policy (no inline scripts, no framing by
+  other sites) from the root `.htaccess`.
+- PHP warnings are logged, never shown in responses; non-text input is refused
+  with 400.
 - Text typed by customers and cashiers is shown with `textContent` or escaped
   before it is inserted into a page.
 
@@ -151,15 +199,16 @@ scripted Microsoft Edge sessions at phone (412 px) and laptop (1366 px) widths:
   nothing is saved.
 - Server-side pricing ignores prices sent by the browser.
 - CSRF: requests without the header or with a wrong token get 403.
-- Lockout: the 6th attempt after 5 wrong passwords gets 429, even with the
-  correct password.
+- Lockout: the 6th attempt after 5 wrong passwords gets 429 from that IP, even
+  with the correct password; the same account still signs in from another IP.
 - Rate limit: requests over the limit get 429 with `Retry-After`.
 - Helper files return 403 when opened directly.
 - Every customer and cashier page at 412 px without horizontal scrolling.
 
 ## Known limitations
 
-- No HTTPS on the local XAMPP server, so traffic on the café Wi-Fi is not encrypted.
+- HTTPS has to be turned on in Apache (see *Turning on HTTPS*); until then,
+  traffic on the café Wi-Fi is not encrypted.
 - Rate limits count per IP address; customers on the same Wi-Fi share one limit.
 - Order status updates reach the customer only while the status page is open.
 - The sales report counts completed orders only. Its category bars and top
@@ -167,7 +216,9 @@ scripted Microsoft Edge sessions at phone (412 px) and laptop (1366 px) widths:
 - An order number can be skipped when a walk-in payment is refused (the order
   is rolled back but MySQL does not reuse the id).
 - Discounts do not record the PWD / Senior / Student ID number.
-- A locked account tells the user it is locked, which shows that the username exists.
+- After 50 wrong passwords from several devices, the account-wide lock still
+  reveals that the username exists (the per-IP lock works the same for every
+  username).
 
 ## Looking after the database
 

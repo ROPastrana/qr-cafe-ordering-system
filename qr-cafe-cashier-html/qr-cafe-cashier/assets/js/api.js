@@ -134,10 +134,12 @@ Cafe.api = (function () {
   }
 
   /* ---- Orders ---- */
-  /* Live queue: every open order plus today's completed / declined ones */
-  function getOrders() {
+  /* Live queue: every open order plus today's completed / declined ones.
+     isPoll: true for the automatic refresh, which the server doesn't count as the cashier
+     being active (so an unattended screen still signs out after 30 idle minutes). */
+  function getOrders(isPoll) {
     if (cfg.USE_MOCK_DATA) return Promise.resolve(store.getOrders());
-    return request("GET", "/queue.php").then(function (list) { return list.map(reviveOrder); });
+    return request("GET", isPoll ? "/queue.php?poll=1" : "/queue.php").then(function (list) { return list.map(reviveOrder); });
   }
 
   /* from / to: "YYYY-MM-DD". status: "finished" (completed + declined) or "completed" */
