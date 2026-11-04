@@ -6,6 +6,12 @@
     # PHP may send its own Cache-Control (sessions, track.php); keep just one
     Header unset Cache-Control
     Header always set Cache-Control "no-store"
+
+    # The menu is the same for everyone and changes rarely: browsers may reuse it for 60 s.
+    # <Files> is applied after the lines above, so this replaces no-store for menu.php only.
+    <Files "menu.php">
+        Header always set Cache-Control "public, max-age=60"
+    </Files>
 </IfModule>
 
 # Don't list the files in /cafe/api/

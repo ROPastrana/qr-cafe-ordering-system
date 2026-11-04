@@ -51,13 +51,14 @@ Cafe.api = (function () {
   /* With the real API the menu comes from menu.php; drop the demo menu so it never shows. */
   if (!cfg.USE_MOCK_DATA) Cafe.MENU_ITEMS = [];
 
-  function request(method, path, body) {
+  /* fetchOptions: extra fetch() options, e.g. { cache: "no-cache" } */
+  function request(method, path, body, fetchOptions) {
     var headers = { Accept: "application/json" };
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    return apiFetch(cfg.API_BASE_URL + path, {
+    return apiFetch(cfg.API_BASE_URL + path, Object.assign({
       method: method, headers: headers,
       body: body === undefined ? undefined : JSON.stringify(body)
-    }).then(function (res) {
+    }, fetchOptions)).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (json) {
         if (res.status === 401 && path !== "/login.php") {   /* signed out or session older than 12 h */
           store.clearSession();
@@ -124,7 +125,9 @@ Cafe.api = (function () {
   /* ---- Menu ---- */
   function getMenu() {
     if (cfg.USE_MOCK_DATA) return Promise.resolve(Cafe.MENU_ITEMS.slice());
-    return request("GET", "/menu.php").then(function (rows) {
+    /* menu.php may be cached for 60 s; the cashier always asks the server, so a price
+       or availability change shows up at once in manual entry and the report */
+    return request("GET", "/menu.php", undefined, { cache: "no-cache" }).then(function (rows) {
       Cafe.MENU_ITEMS = rows.map(normalizeMenuItem);   /* so Cafe.menuById() finds the real items */
       return Cafe.MENU_ITEMS.slice();
     });
