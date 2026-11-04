@@ -95,7 +95,8 @@ Cafe.api = (function () {
   /*
    * order = {
    *   customerName, serviceType ("Dine In" | "Take Out"),
-   *   items: [{ itemId, qty, size, sugarLevel, serve }]
+   *   items: [{ itemId, qty, size, sugarLevel, serve }],
+   *   requestId (optional: the same id on a retry returns the order already made)
    * }
    * resolves -> { orderNum, status, total, trackToken }
    *   total is the server's price (null in mock mode); trackToken is used with track.php
@@ -120,6 +121,7 @@ Cafe.api = (function () {
         return { itemId: i.itemId, qty: i.qty, size: i.size, sugarLevel: i.sugarLevel, serve: i.serve };
       })
     };
+    if (order.requestId) body.requestId = order.requestId;
 
     return apiFetch(cfg.API_BASE_URL + "/orders.php", {
       method: "POST",
