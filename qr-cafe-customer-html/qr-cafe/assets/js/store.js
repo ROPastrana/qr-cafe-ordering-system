@@ -1,8 +1,9 @@
 /* ==========================================================================
    QR Cafe – Client-side state (cart, form, last placed order)
-   Uses sessionStorage so state survives page navigation within the visit,
-   matching "no account; tracked per session". Falls back to memory if
-   storage is blocked.
+   Cart, form and menu tab use sessionStorage: they last for this browser tab.
+   The placed order uses localStorage, so closing the tab or scanning the QR
+   code again doesn't lose it; it expires after ORDER_MAX_AGE_MS.
+   Falls back to memory if storage is blocked.
    ========================================================================== */
 window.Cafe = window.Cafe || {};
 
@@ -87,10 +88,48 @@ Cafe.store = (function () {
   }
   function setForm(form) { write(KEYS.form, form); }
 
-  /* ---- Last placed order (for the received / declined screen) ---- */
-  function getOrder() { return read(KEYS.order, null); }
-  function setOrder(order) { write(KEYS.order, order); }
-  function clearOrder() { remove(KEYS.order); }
+  /* ---- Last placed order (for the status page and the "your order" bar) ----
+     Kept in localStorage with the time it was placed; forgotten after 12 hours. */
+  var ORDER_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+
+  function getOrder() {
+    var order = null;
+    try {
+      var raw = window.localStorage.getItem(KEYS.order);
+      if (raw === null) {
+        /* An order saved by the older version (sessionStorage): move it over once */
+        raw = window.sessionStorage.getItem(KEYS.order);
+        if (raw !== null) {
+          var old = JSON.parse(raw);
+          window.sessionStorage.removeItem(KEYS.order);
+          if (old) { setOrder(old); return getOrder(); }
+        }
+      }
+      /* null in storage but kept in memory: storage refused the write (e.g. full) */
+      order = raw === null ? (memory[KEYS.order] || null) : JSON.parse(raw);
+    } catch (e) {
+      order = KEYS.order in memory ? memory[KEYS.order] : null;
+    }
+    if (order && (!order.placedAt || Date.now() - order.placedAt > ORDER_MAX_AGE_MS)) {
+      clearOrder();
+      return null;
+    }
+    return order;
+  }
+
+  function setOrder(order) {
+    if (!order.placedAt) order.placedAt = Date.now();
+    memory[KEYS.order] = order;
+    try { window.localStorage.setItem(KEYS.order, JSON.stringify(order)); } catch (e) { /* memory only */ }
+  }
+
+  function clearOrder() {
+    delete memory[KEYS.order];
+    try {
+      window.localStorage.removeItem(KEYS.order);
+      window.sessionStorage.removeItem(KEYS.order);
+    } catch (e) { /* ignore */ }
+  }
 
   return {
     getCart: getCart, addToCart: addToCart, updateQty: updateQty,

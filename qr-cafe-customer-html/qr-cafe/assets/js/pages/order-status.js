@@ -146,10 +146,12 @@
     poll();
   });
 
-  /* "Back to Menu" resets to the Coffee tab and forgets this order. */
+  /* "Back to Menu" resets to the Coffee tab. The order is only forgotten once it is
+     finished (completed or declined); an open order stays, and the menu shows a bar
+     that leads back here. */
   $("back-to-menu").addEventListener("click", function () {
     store.setCategory("Coffee");
-    store.clearOrder();
+    if (FINAL[order.status]) store.clearOrder();
   });
 
   render();
