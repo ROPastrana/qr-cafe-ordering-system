@@ -123,8 +123,8 @@ final class OrderService {
 
         foreach ($items as $it) {
             if (!is_array($it)) throw new ApiException(400, 'Invalid item');
-            $itemId = filter_var($it['itemId'] ?? null, FILTER_VALIDATE_INT);
-            $qty    = filter_var($it['qty'] ?? null, FILTER_VALIDATE_INT);
+            $itemId = Request::intValue($it['itemId'] ?? null);
+            $qty    = Request::intValue($it['qty'] ?? null);
             if (!$itemId || !$qty || $qty < 1 || $qty > 20) {
                 throw new ApiException(400, 'Invalid item or quantity');
             }

@@ -75,9 +75,14 @@ automatically, so the password and session are encrypted on the Wi-Fi. On the
 laptop itself (`http://localhost/...`) plain HTTP stays allowed, because nothing
 crosses the network. Over HTTPS the session cookie is marked `Secure`.
 
-XAMPP's built-in certificate is self-signed, so the browser shows a warning the
-first time; choose *Advanced → Continue*. To remove the warning, make a trusted
-certificate with [mkcert](https://github.com/FiloSottile/mkcert):
+XAMPP's built-in certificate is self-signed and expired, so replace it with one
+made for the laptop's IP address. Then, on each device that opens the cashier
+app, install `apache\conf\ssl.crt\server.crt` as a trusted certificate, or
+choose *Advanced → Continue* when the browser warns. If the laptop's IP address
+changes, the certificate must be made again.
+
+Alternatively, make a trusted certificate with
+[mkcert](https://github.com/FiloSottile/mkcert):
 
 1. In a terminal, using the laptop's IP address:
    ```
@@ -186,7 +191,7 @@ review and what was fixed.
   automatic refresh doesn't count), after 12 hours in any case, and at once
   when their password changes or their account is deleted.
 - Every POST / PATCH needs an `X-CSRF-Token` header that matches the session.
-- Per-IP rate limits: 60 orders and 20 logins per 10 minutes.
+- Per-IP rate limits: 20 orders and 20 logins per 10 minutes.
 - Prepared statements (PDO) for every query; the API uses a database account
   that can only SELECT, INSERT and UPDATE.
 - Customers follow orders with a random 128-bit token instead of the order number.

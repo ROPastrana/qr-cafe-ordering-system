@@ -6,7 +6,7 @@ ErrorHandler::serverErrorMessage('Could not save your order. Please try again.')
 Request::requireMethod('POST');
 Session::requireCsrf();
 $pdo = Database::connection();
-(new RateLimiter($pdo))->hit('order', 60, 600);   // generous: a whole cafe may share one Wi-Fi IP
+(new RateLimiter($pdo))->hit('order', 20, 600);   // each phone on the Wi-Fi has its own IP; 20 is far more than one table needs
 
 $body = Request::json();
 

@@ -13,6 +13,11 @@ final class Request {
         return [];
     }
 
+    // A whole number from the JSON body, or false. PHP's filter alone would read true as 1.
+    public static function intValue(mixed $value): int|false {
+        return is_bool($value) ? false : filter_var($value, FILTER_VALIDATE_INT);
+    }
+
     // A query-string value. ?t[]=x sends an array instead of text; that counts as missing,
     // so it never reaches a (string) cast (which would raise an "Array to string" warning).
     public static function query(string $name, string $default = ''): string {

@@ -8,7 +8,7 @@ Request::requireMethod('POST');
 Session::requireCsrf();
 
 $body = Request::json(false);
-$orderId = filter_var($body['orderId'] ?? null, FILTER_VALIDATE_INT);
+$orderId = Request::intValue($body['orderId'] ?? null);
 if (!$orderId) throw new ApiException(400, 'Missing order id');
 
 Response::json((new PaymentService(Database::connection()))->settle($orderId, $cashier['id'], $body));
