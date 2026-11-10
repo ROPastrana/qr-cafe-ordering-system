@@ -4,10 +4,11 @@ final class PaymentService {
     private const DISCOUNT_RATE = 0.20;
     private const MAX_CASH = 1000000;   // more than any real payment; also stops "1e999" (infinity)
     private const DISCOUNTS = ['PWD' => 'pwd', 'Senior Citizen' => 'senior', 'Student' => 'student'];
+    private const DISCOUNT_ID_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9 \/-]{2,29}$/D';   // as printed on the ID cards
 
     public function __construct(private PDO $pdo) {}
 
-    // $in: method, cashTendered or gcashRef, discountType. Returns the receipt fields.
+    // $in: method, cashTendered or gcashRef, discountType, discountIdNo. Returns the receipt fields.
     public function settle(int $orderId, int $cashierId, array $in): array {
         $method = $in['method'] ?? '';
         if (!in_array($method, ['cash', 'gcash'], true)) {
@@ -17,6 +18,15 @@ final class PaymentService {
         $discountKey = $in['discountType'] ?? null;
         if ($discountKey !== null && (!is_string($discountKey) || !isset(self::DISCOUNTS[$discountKey]))) {
             throw new PayException(400, 'Invalid discount');
+        }
+
+        // Every discount is recorded with the ID it was given for. It stays out of the receipt fields.
+        $discountIdNo = null;
+        if ($discountKey !== null) {
+            $discountIdNo = is_string($in['discountIdNo'] ?? null) ? trim($in['discountIdNo']) : '';
+            if (!preg_match(self::DISCOUNT_ID_PATTERN, $discountIdNo)) {
+                throw new PayException(400, 'Enter the discount ID number (3 to 30 letters or numbers)');
+            }
         }
 
         $own = !$this->pdo->inTransaction();   // a walk-in already opened one
@@ -66,10 +76,10 @@ final class PaymentService {
             $this->pdo->prepare(
                 "UPDATE tbl_orders
                  SET order_status = 'preparing', cashier_id = ?, discount_type = ?,
-                     discount_amount = ?, subtotal = ?, total_amount = ?
+                     discount_amount = ?, discount_id_no = ?, subtotal = ?, total_amount = ?
                  WHERE order_id = ?"
             )->execute([$cashierId, $discountKey ? self::DISCOUNTS[$discountKey] : 'none',
-                        $discount, $subtotal, $total, $orderId]);
+                        $discount, $discountIdNo, $subtotal, $total, $orderId]);
 
             if ($own) $this->pdo->commit();
         } catch (Throwable $e) {

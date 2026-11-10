@@ -190,6 +190,7 @@ CREATE TABLE `tbl_orders` (
   `decline_note` varchar(255) DEFAULT NULL,
   `discount_type` enum('none','senior','pwd','student') NOT NULL DEFAULT 'none',
   `discount_amount` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `discount_id_no` varchar(30) DEFAULT NULL,
   `subtotal` decimal(10,2) NOT NULL DEFAULT 0.00,
   `total_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),

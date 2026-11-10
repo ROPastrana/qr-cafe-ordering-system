@@ -72,6 +72,12 @@ Cafe.ui = (function () {
       }).join("") + "</div></div>";
   }
 
+  /* ---- ID number a discount is recorded with. Saved by the server, never shown on a receipt. ---- */
+  function discountIdField(value) {
+    return '<div class="field"><label class="field__label" for="discount-id">Discount ID Number</label>' +
+      '<input id="discount-id" class="field__input" type="text" maxlength="30" autocomplete="off" placeholder="PWD, Senior Citizen or Student ID" value="' + esc(value) + '"></div>';
+  }
+
   /* ---- Error / info toast ---- */
   function toast(message) {
     var el = document.createElement("div");
@@ -84,6 +90,6 @@ Cafe.ui = (function () {
 
   return {
     esc: esc, setPressed: setPressed, icons: icons, typeBadge: typeBadge, statusPill: statusPill,
-    qrCode: qrCode, discountToggle: discountToggle, toast: toast
+    qrCode: qrCode, discountToggle: discountToggle, discountIdField: discountIdField, toast: toast
   };
 })();

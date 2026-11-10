@@ -17,7 +17,7 @@
   var state = {};
   var selectedId = Number(new URLSearchParams(window.location.search).get("id")) || null;
 
-  function resetPayment() { state = { method: "cash", cash: "", gcashRef: "", discount: null }; }
+  function resetPayment() { state = { method: "cash", cash: "", gcashRef: "", discount: null, discountId: "" }; }
   resetPayment();
 
   /* ---- Money ---- */
@@ -50,6 +50,10 @@
       return '<button type="button" class="pay-option" data-method="' + m[0] + '" aria-pressed="' + (state.method === m[0]) + '">' +
         '<div class="pay-option__title">' + m[1] + '</div><div class="pay-option__desc">' + m[2] + "</div></button>";
     }).join("") + "</div>";
+  }
+
+  function discountHtml() {
+    return ui.discountToggle(state.discount) + (state.discount ? ui.discountIdField(state.discountId) : "");
   }
 
   function paymentPanelHtml() {
@@ -89,7 +93,7 @@
       '<p class="detail-meta">' + esc(order.customer) + " \u00B7 Received " + Cafe.fmtTime(order.createdAt) + " \u00B7 " + Cafe.timeAgo(order.createdAt) + "</p>" +
       '<div class="rule"></div><h3 class="section-heading">Order Items Breakdown</h3>' + items +
       (order.note ? '<div class="note-box"><p class="note-box__title">Customer Note</p><p class="note-box__text">\u201C' + esc(order.note) + "\u201D</p></div>" : "") +
-      '<div id="discount-slot">' + ui.discountToggle(state.discount) + "</div>" +
+      '<div id="discount-slot">' + discountHtml() + "</div>" +
       payMethodHtml() + '<div id="payment-panel">' + paymentPanelHtml() + "</div>" +
       '<div id="summary" class="totals"></div>' +
       '<div class="btn-row">' +
@@ -152,7 +156,8 @@
 
     if (discount) {
       state.discount = state.discount === discount.dataset.discount ? null : discount.dataset.discount;
-      document.getElementById("discount-slot").innerHTML = ui.discountToggle(state.discount);
+      state.discountId = "";
+      document.getElementById("discount-slot").innerHTML = discountHtml();
       renderFigures();
     } else if (method) {
       state.method = method.dataset.method;
@@ -175,11 +180,13 @@
   detailEl.addEventListener("input", function (e) {
     if (e.target.id === "cash-input") { state.cash = e.target.value; renderFigures(); }
     if (e.target.id === "gcash-ref")  { state.gcashRef = e.target.value; }
+    if (e.target.id === "discount-id") { state.discountId = e.target.value; }
   });
 
   /* pay.php recomputes the discount and total from the saved items; the receipt shows its numbers. */
   function completePayment(btn) {
-    var payment = { method: state.method, discountType: state.discount || null };
+    if (state.discount && !state.discountId.trim()) { ui.toast("Enter the discount ID number."); return; }
+    var payment = { method: state.method, discountType: state.discount || null, discountIdNo: state.discountId.trim() };
     if (state.method === "cash") payment.cashTendered = figures().cash;
     else payment.gcashRef = state.gcashRef.trim();
 
