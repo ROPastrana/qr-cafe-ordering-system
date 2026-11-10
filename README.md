@@ -51,8 +51,12 @@ tables should point to that address. Windows Firewall may ask to allow Apache.
 
 ### Cashier accounts
 
+**Required after importing the database:** this repository is public, so
+`cafe_pos.sql` contains no password and `cashier01` can't sign in until you set
+one. Choose a long password that isn't used anywhere else.
+
 Accounts live in `tbl_cashiers` (passwords are stored as bcrypt hashes). To set
-a new password, create a hash and update the row:
+a password, create a hash and update the row:
 
 ```
 C:\xampp\php\php.exe -r "echo password_hash('NEW-PASSWORD-HERE', PASSWORD_DEFAULT), PHP_EOL;"
@@ -64,13 +68,18 @@ UPDATE tbl_cashiers SET password_hash = '<paste the hash>' WHERE username = 'cas
 Changing a password (or deleting the row) signs that cashier out everywhere on
 their next request.
 
-### Turning on HTTPS (recommended)
+### HTTPS
 
-Without HTTPS, anyone on the café Wi-Fi can read the cashier's password and
-session cookie. XAMPP already includes Apache's SSL module:
+A cashier who opens the cashier app over the network is sent to `https://`
+automatically, so the password and session are encrypted on the Wi-Fi. On the
+laptop itself (`http://localhost/...`) plain HTTP stays allowed, because nothing
+crosses the network. Over HTTPS the session cookie is marked `Secure`.
 
-1. Make a certificate for the laptop's IP address with
-   [mkcert](https://github.com/FiloSottile/mkcert) (run in a terminal):
+XAMPP's built-in certificate is self-signed, so the browser shows a warning the
+first time; choose *Advanced → Continue*. To remove the warning, make a trusted
+certificate with [mkcert](https://github.com/FiloSottile/mkcert):
+
+1. In a terminal, using the laptop's IP address:
    ```
    mkcert -install
    mkcert 192.168.1.20 localhost
@@ -78,13 +87,11 @@ session cookie. XAMPP already includes Apache's SSL module:
 2. Copy the two `.pem` files into `C:\xampp\apache\conf\ssl.crt\` and point
    `SSLCertificateFile` / `SSLCertificateKeyFile` in
    `C:\xampp\apache\conf\extra\httpd-ssl.conf` at them. Restart Apache.
-3. Open `https://192.168.1.20/cafe/...`. Phones show a warning unless mkcert's
-   root certificate (`mkcert -CAROOT`) is installed on them.
-4. When it works, remove the `#` from the redirect lines at the bottom of
-   `.htaccess` so `http://` visits move to `https://`.
+3. On any other device that opens the cashier app, install mkcert's root
+   certificate (`mkcert -CAROOT`).
 
-The PHP code needs no change: over HTTPS the session cookie is automatically
-marked `Secure`.
+Customer pages stay on `http://` so scanning the table QR code never shows a
+certificate warning. They carry no passwords.
 
 ## How an order moves
 
@@ -167,8 +174,12 @@ review and what was fixed.
   response time for a wrong username or a wrong password.
 - 5 wrong passwords lock that username for 5 minutes **for that IP address
   only**, so a customer can't lock the cashier out. 50 wrong passwords from all
-  addresses together lock the account for 15 minutes.
-- Session cookie `cafe_sid`: `HttpOnly`, `SameSite=Lax`, limited to `/cafe/`,
+  addresses together lock the account for 15 minutes. Attempts are counted
+  before the password is checked, so simultaneous guesses can't beat the limit.
+- Only the apps are served: `database/`, `docs/`, documentation, dotfiles and
+  npm files return 403, and folder listings are off.
+- `cafe_pos.sql` never contains password hashes (`database/strip-password-hashes.php`).
+- Session cookie `cafe_sid` (`cafe_sid_tls` over HTTPS): `HttpOnly`, `SameSite=Lax`, limited to `/cafe/`,
   and `Secure` over HTTPS. The session ID is renewed at login; ids the server
   didn't create are refused (`session.use_strict_mode`).
 - Cashiers are signed out after 30 minutes without activity (the queue's
@@ -207,8 +218,13 @@ scripted Microsoft Edge sessions at phone (412 px) and laptop (1366 px) widths:
 
 ## Known limitations
 
-- HTTPS has to be turned on in Apache (see *Turning on HTTPS*); until then,
-  traffic on the café Wi-Fi is not encrypted.
+- Customer pages use plain HTTP, so names and orders are not encrypted on the
+  Wi-Fi. Cashier sign-ins over the network are.
+- GCash payments are not verified: the cashier types the reference number, and
+  the QR code on the payment screen is a placeholder.
+- The live queue shows at most 500 orders; unpaid orders leave it after 12 hours.
+- One history or sales report request covers at most 20,000 orders; a larger
+  range is refused rather than totalled incorrectly.
 - Rate limits count per IP address; customers on the same Wi-Fi share one limit.
 - Order status updates reach the customer only while the status page is open.
 - The sales report counts completed orders only. Its category bars and top
@@ -227,4 +243,6 @@ scripted Microsoft Edge sessions at phone (412 px) and laptop (1366 px) widths:
 - After changing data or tables, re-export the database:
   ```
   C:\xampp\mysql\bin\mysqldump.exe -u root --routines --databases cafe_pos --result-file="C:\xampp\htdocs\cafe\database\cafe_pos.sql"
+  C:\xampp\php\php.exe C:\xampp\htdocs\cafe\database\strip-password-hashes.php
   ```
+  The second command removes password hashes. Always run it before committing.

@@ -1,0 +1,9 @@
+# The cashier signs in with a password, so a cashier connecting over the network always uses HTTPS.
+# On the laptop itself (localhost) nothing crosses the Wi-Fi, so plain HTTP stays allowed there.
+# Customer pages are not redirected: the printed QR code uses http:// and they carry no password.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?$
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L]
+</IfModule>

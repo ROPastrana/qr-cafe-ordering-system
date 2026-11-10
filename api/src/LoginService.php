@@ -32,7 +32,9 @@ final class LoginService {
 
         // Checked before the password, so a locked username refuses even the right one.
         // Works the same for usernames that don't exist.
-        $this->limiter->check($bucket, self::MAX_FAILS_PER_IP, self::IP_LOCK_SECONDS, self::LOCKED_MESSAGE);
+        // Each attempt is counted before its password is checked (a success clears the count),
+        // so guesses sent at the same moment can't all get past the limit.
+        $this->limiter->hit($bucket, self::MAX_FAILS_PER_IP, self::IP_LOCK_SECONDS, self::LOCKED_MESSAGE);
 
         $stmt = $this->pdo->prepare(
             "SELECT cashier_id, full_name, password_hash,
@@ -49,7 +51,6 @@ final class LoginService {
         // Always run one bcrypt check, even for an unknown username (see DUMMY_HASH)
         $ok = password_verify($password, $row ? $row['password_hash'] : self::DUMMY_HASH);
         if (!$row || !$ok) {
-            $this->limiter->record($bucket, self::IP_LOCK_SECONDS);
             if ($row) $this->recordFailure((int)$row['cashier_id']);
             usleep(500000); // half-second delay slows down password guessing
             throw new ApiException(401, 'Wrong username or password');   // same message for both cases

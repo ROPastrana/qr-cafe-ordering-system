@@ -5,33 +5,28 @@ final class RateLimiter {
     public function __construct(private PDO $pdo) {}
 
     // Counts this request and allows $max requests per IP in each $windowSeconds window.
-    public function hit(string $bucket, int $max, int $windowSeconds): void {
+    // Counting comes first, so requests sent at the same moment can't all slip under the limit.
+    public function hit(string $bucket, int $max, int $windowSeconds,
+                        string $message = 'Too many requests. Please wait a few minutes and try again.'): void {
         $this->record($bucket, $windowSeconds);
         [$hits, $wait] = $this->current($bucket, $windowSeconds);
-        if ($hits > $max) self::refuse($wait, 'Too many requests. Please wait a few minutes and try again.');
-    }
-
-    // 429 when this IP already has $max events in the bucket's current window. Counts nothing;
-    // use it with record() when only some requests should count (for example failed logins).
-    public function check(string $bucket, int $max, int $windowSeconds, string $message): void {
-        [$hits, $wait] = $this->current($bucket, $windowSeconds);
-        if ($hits >= $max) self::refuse($wait, $message);
-    }
-
-    // Counts one event. One atomic statement: starts a new window if the old one ended.
-    public function record(string $bucket, int $windowSeconds): void {
-        $this->pdo->prepare(
-            "INSERT INTO tbl_rate_limit (ip, bucket, hits, window_start) VALUES (?, ?, 1, NOW())
-             ON DUPLICATE KEY UPDATE
-                 hits = IF(window_start <= NOW() - INTERVAL ? SECOND, 1, hits + 1),
-                 window_start = IF(window_start <= NOW() - INTERVAL ? SECOND, NOW(), window_start)"
-        )->execute([self::ip(), $bucket, $windowSeconds, $windowSeconds]);
+        if ($hits > $max) throw new ApiException(429, $message, ['Retry-After' => max(1, $wait)]);
     }
 
     // Forgets this IP's events in the bucket (UPDATE, so the database user needs no DELETE right)
     public function clear(string $bucket): void {
         $this->pdo->prepare("UPDATE tbl_rate_limit SET hits = 0 WHERE ip = ? AND bucket = ?")
             ->execute([self::ip(), $bucket]);
+    }
+
+    // Counts one event. One atomic statement: starts a new window if the old one ended.
+    private function record(string $bucket, int $windowSeconds): void {
+        $this->pdo->prepare(
+            "INSERT INTO tbl_rate_limit (ip, bucket, hits, window_start) VALUES (?, ?, 1, NOW())
+             ON DUPLICATE KEY UPDATE
+                 hits = IF(window_start <= NOW() - INTERVAL ? SECOND, 1, hits + 1),
+                 window_start = IF(window_start <= NOW() - INTERVAL ? SECOND, NOW(), window_start)"
+        )->execute([self::ip(), $bucket, $windowSeconds, $windowSeconds]);
     }
 
     // [events in the current window, seconds until it ends]; [0, 0] when the window is over
@@ -44,10 +39,6 @@ final class RateLimiter {
         $row = $stmt->fetch();
         if (!$row || (int)$row['wait'] <= 0) return [0, 0];
         return [(int)$row['hits'], (int)$row['wait']];
-    }
-
-    private static function refuse(int $wait, string $message): never {
-        throw new ApiException(429, $message, ['Retry-After' => max(1, $wait)]);
     }
 
     private static function ip(): string {

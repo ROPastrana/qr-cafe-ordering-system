@@ -1,3 +1,19 @@
+# Don't list the files in any folder of the project
+Options -Indexes
+
+# Only the apps themselves are meant for the browser. Refuse project files that happen to sit in
+# the web folder: dotfiles (.gitignore, .mise.toml, .htaccess), documentation, SQL exports, npm files.
+# database/ and docs/ are also blocked completely by their own .htaccess.
+<FilesMatch "(?i)(^\.|\.(md|sql|toml|docx|log|bak|ps1|bat)$|^package(-lock)?\.json$)">
+    Require all denied
+</FilesMatch>
+
+# Never serve a .git folder, in case one is copied here by mistake
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (^|/)\.git(/|$) - [F]
+</IfModule>
+
 # Browsers must re-check pages, scripts and styles with Apache before reusing them
 # (unchanged files come back as a quick 304), so an update never mixes old and new files.
 <IfModule mod_headers.c>
@@ -17,11 +33,3 @@
         Header always set Referrer-Policy "same-origin"
     </FilesMatch>
 </IfModule>
-
-# Once HTTPS works on this server (see "Turning on HTTPS" in README.md), remove the # from the
-# four lines below so every http:// visit is sent to https:// instead.
-# <IfModule mod_rewrite.c>
-#     RewriteEngine On
-#     RewriteCond %{HTTPS} off
-#     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-# </IfModule>

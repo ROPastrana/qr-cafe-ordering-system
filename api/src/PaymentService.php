@@ -2,6 +2,7 @@
 // Settles an order: cash or GCash, optional 20% discount, then pending -> preparing.
 final class PaymentService {
     private const DISCOUNT_RATE = 0.20;
+    private const MAX_CASH = 1000000;   // more than any real payment; also stops "1e999" (infinity)
     private const DISCOUNTS = ['PWD' => 'pwd', 'Senior Citizen' => 'senior', 'Student' => 'student'];
 
     public function __construct(private PDO $pdo) {}
@@ -43,6 +44,7 @@ final class PaymentService {
                 $raw = $in['cashTendered'] ?? null;
                 if (!is_numeric($raw)) throw new PayException(400, 'Enter the cash tendered');
                 $tendered = round((float)$raw, 2);
+                if (!is_finite($tendered) || $tendered > self::MAX_CASH) throw new PayException(400, 'That cash amount is too large');
                 if ($tendered < $total) throw new PayException(400, 'Cash tendered is less than the total');
                 $amountPaid = $tendered;
                 $change = round($tendered - $total, 2);
