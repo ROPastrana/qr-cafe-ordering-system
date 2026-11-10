@@ -8,7 +8,7 @@ Request::requireMethod('PATCH');
 Session::requireCsrf();
 
 $body = Request::json();
-$id = filter_var($body['id'] ?? null, FILTER_VALIDATE_INT);
+$id = Request::intValue($body['id'] ?? null);
 if (!$id) throw new ApiException(400, 'Missing order id');
 
 (new OrderService(Database::connection()))

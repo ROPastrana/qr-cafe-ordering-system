@@ -11,17 +11,25 @@ final class OrderRepository {
     ];
     private const TYPE_MAP = ['dine_in' => 'Dine In', 'take_out' => 'Take Out'];
     private const DISCOUNT_LABELS = ['pwd' => 'PWD', 'senior' => 'Senior Citizen', 'student' => 'Student'];
+    private const HISTORY_LIMIT = 20000;   // most orders one history or sales report request may cover
 
     public function __construct(private PDO $pdo) {}
 
-    // Open orders always, plus anything from today (completed / declined).
+    // The cashier's live board: paid orders still in progress, unpaid orders from the last
+    // 12 hours (older ones were abandoned), and today's completed / declined ones.
     // created_at is compared as a range (not DATE(created_at)) so its index can be used.
+    // Paid orders are picked first, then the newest unpaid ones, so a flood of fake orders can't
+    // push real orders off the 500-row board. Reversed at the end: oldest first on screen.
     public function queue(): array {
-        return $this->fetch(
-            "o.order_status IN ('pending','preparing','ready')
-             OR (o.created_at >= CURDATE() AND o.created_at < CURDATE() + INTERVAL 1 DAY)",
-            []
-        );
+        return array_reverse($this->fetch(
+            "o.order_status IN ('preparing','ready')
+             OR (o.order_status = 'pending' AND o.created_at >= NOW() - INTERVAL 12 HOUR)
+             OR (o.order_status IN ('completed','declined')
+                 AND o.created_at >= CURDATE() AND o.created_at < CURDATE() + INTERVAL 1 DAY)",
+            [],
+            "CASE WHEN o.order_status IN ('preparing','ready') THEN 0
+                  WHEN o.order_status = 'pending' THEN 1 ELSE 2 END, o.created_at DESC"
+        ));
     }
 
     // Finished orders between two dates (YYYY-MM-DD), newest first.
@@ -30,11 +38,17 @@ final class OrderRepository {
         $statuses = $completedOnly ? ['completed'] : ['completed', 'declined'];
         $marks = implode(',', array_fill(0, count($statuses), '?'));
         // From the start of $from up to (not including) the day after $to, as a range on created_at
-        return $this->fetch(
+        $orders = $this->fetch(
             "o.order_status IN ($marks) AND o.created_at >= ? AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)",
             [...$statuses, $from, $to],
-            'o.created_at DESC'
+            'o.created_at DESC',
+            self::HISTORY_LIMIT + 1
         );
+        // The sales report adds these rows up, so a cut-off list would give a wrong total: refuse instead
+        if (count($orders) > self::HISTORY_LIMIT) {
+            throw new ApiException(400, 'Too many orders in this range. Please choose a shorter date range.');
+        }
+        return $orders;
     }
 
     // What the customer's phone needs to follow an order, or null for an unknown token

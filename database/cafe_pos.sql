@@ -48,7 +48,7 @@ CREATE TABLE `tbl_cashiers` (
 
 LOCK TABLES `tbl_cashiers` WRITE;
 /*!40000 ALTER TABLE `tbl_cashiers` DISABLE KEYS */;
-INSERT INTO `tbl_cashiers` VALUES (1,'cashier01','$2y$10$vmTr.OOhb0rsVyibJmSrHOchdxpkxqXSLnQcHntnNi9qyYwyOu5WS','Cashier01',0,NULL);
+INSERT INTO `tbl_cashiers` VALUES (1,'cashier01','!set-a-password-after-import','Cashier01',0,NULL);
 /*!40000 ALTER TABLE `tbl_cashiers` ENABLE KEYS */;
 UNLOCK TABLES;
 

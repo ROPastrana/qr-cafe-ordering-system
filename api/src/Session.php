@@ -16,7 +16,11 @@ final class Session {
             // Refuse session ids the server never created (a planted cookie gets a fresh id instead)
             ini_set('session.use_strict_mode', '1');
             ini_set('session.use_only_cookies', '1');
-            session_name(self::COOKIE_NAME);
+            // Keep session files as long as a sign-in may last (PHP's default deletes them after 24 minutes)
+            ini_set('session.gc_maxlifetime', (string)self::MAX_AGE);
+            // A separate name over HTTPS: a Secure cookie would otherwise block the plain-HTTP
+            // cookie of the same name, breaking the customer pages in that browser
+            session_name(self::isHttps() ? self::COOKIE_NAME . '_tls' : self::COOKIE_NAME);
             session_set_cookie_params([
                 'lifetime' => 0,
                 'path'     => self::COOKIE_PATH,

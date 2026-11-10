@@ -200,5 +200,28 @@ After deploying to XAMPP, open each page with the browser's developer tools (F12
 2. Run `database/create_app_user.sql` (with your own password in place of `CHANGE-ME`) and update `api/db.php` to use `cafe_app`.
 3. Restart Apache. Check the pages for CSP errors as described in section 4.
 4. Expect cashiers to be signed out once: old sessions don't have the new idle and account fields.
-5. Turn on HTTPS (README → *Turning on HTTPS*). Then enable the redirect at the bottom of `.htaccess`.
+5. Network cashier access now redirects to HTTPS automatically (README → *HTTPS*).
 6. If a menu photo is added from a website other than Unsplash, add that host to `img-src` in `.htaccess`.
+
+## 6. Second review (November 10, 2026)
+
+A second audit tested the running system on Apache and found issues the first review missed. The first review checked the code but not which files Apache serves.
+
+| Issue | Severity | Status | Fix |
+| --- | --- | --- | --- |
+| Anyone on the Wi-Fi could download `cafe_pos.sql` with the cashier's password hash; folders were listed | High | Fixed | Root, `database/` and `docs/` `.htaccess` rules; listings off |
+| The password hash was in the public repository and matched a common password | High | Hash removed; **the password must be changed on every install** | `cafe_pos.sql` holds no hash; `strip-password-hashes.php` cleans future exports |
+| Fake orders could push real orders off the 500-row queue | Medium | Fixed | Paid orders first, then newest unpaid; unpaid orders leave after 12 hours |
+| The sales report silently stopped at 500 orders | Medium | Fixed | Limit raised to 20,000; larger ranges are refused |
+| Cashier sign-in was unencrypted on the Wi-Fi | Medium | Fixed for cashiers | Network cashier access redirects to HTTPS |
+| Simultaneous guesses got past the 5-try limit | Low | Fixed | Attempts counted before the password check |
+| Very large cash amounts caused a server error | Low | Fixed | Validated, with a maximum of 1,000,000 |
+| PHP used Berlin time, so early-morning receipts had the wrong date | Low | Fixed | Time zone set to Asia/Manila |
+| PHP could delete idle sessions after 24 minutes | Low | Fixed | Session files kept for 12 hours |
+| Apache and PHP versions were visible | Low | Fixed | `X-Powered-By` removed; `ServerTokens Prod` set in XAMPP (server setting) |
+
+**Not changed:** GCash remains unverified (out of scope), and customer pages stay on HTTP. MySQL `root` still has no password because other projects on the same XAMPP may rely on that; XAMPP's default `root` accounts only accept connections from the laptop itself.
+
+**Follow-up:** IDs and quantities sent as `true` are now refused, self-orders are limited to 20 per 10 minutes per device, and a new certificate for the laptop's IP address replaced XAMPP's expired one. On the laptop's XAMPP, the file blocking, HTTPS redirect, certificate and hidden version were confirmed. MySQL did not start there because four internal permission tables are damaged, so the cashier password change is still pending.
+
+**Testing:** 56 checks of these fixes plus a repeat of the attack suite passed on Apache 2.4.58 with HTTP and HTTPS, using a throwaway database. A real Edge browser found no XSS and no Content-Security-Policy violations on any page. The password change and the certificate warning on a real phone still need a manual check.

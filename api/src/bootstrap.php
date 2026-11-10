@@ -8,6 +8,12 @@
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
+// XAMPP's default time zone is Europe/Berlin, which would put early-morning receipts on the wrong date
+date_default_timezone_set('Asia/Manila');
+
+// Don't advertise the PHP version to visitors
+header_remove('X-Powered-By');
+
 spl_autoload_register(function (string $class): void {
     $file = __DIR__ . '/' . $class . '.php';
     if (is_file($file)) require $file;
