@@ -222,4 +222,6 @@ A second audit tested the running system on Apache and found issues the first re
 
 **Not changed:** GCash remains unverified (out of scope), and customer pages stay on HTTP. MySQL `root` still has no password because other projects on the same XAMPP may rely on that; XAMPP's default `root` accounts only accept connections from the laptop itself.
 
+**Follow-up:** IDs and quantities sent as `true` are now refused, self-orders are limited to 20 per 10 minutes per device, and a new certificate for the laptop's IP address replaced XAMPP's expired one. On the laptop's XAMPP, the file blocking, HTTPS redirect, certificate and hidden version were confirmed. MySQL did not start there because four internal permission tables are damaged, so the cashier password change is still pending.
+
 **Testing:** 56 checks of these fixes plus a repeat of the attack suite passed on Apache 2.4.58 with HTTP and HTTPS, using a throwaway database. A real Edge browser found no XSS and no Content-Security-Policy violations on any page. The password change and the certificate warning on a real phone still need a manual check.
