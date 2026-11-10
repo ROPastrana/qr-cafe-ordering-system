@@ -168,7 +168,7 @@ Cafe.api = (function () {
     return request("PATCH", "/status.php", body);
   }
 
-  /* payment: { method: "cash"|"gcash", cashTendered, gcashRef, discountType }
+  /* payment: { method: "cash"|"gcash", cashTendered, gcashRef, discountType, discountIdNo }
      resolves -> { orderCode, receiptNumber, receiptToken, method, subtotal, discount, total, amountPaid, change } */
   function pay(order, payment) {
     if (cfg.USE_MOCK_DATA) {

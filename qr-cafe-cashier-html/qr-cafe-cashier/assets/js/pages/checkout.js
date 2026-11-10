@@ -15,7 +15,7 @@
 
   var summaryEl = document.getElementById("checkout-summary");
   var paymentEl = document.getElementById("checkout-payment");
-  var state = { method: "cash", cash: "", gcashRef: "" };
+  var state = { method: "cash", cash: "", gcashRef: "", discountId: "" };
 
   function figures() {
     var cash = parseFloat(String(state.cash).replace(/[^\d.]/g, "")) || 0;
@@ -69,6 +69,7 @@
 
     paymentEl.innerHTML =
       '<h2 class="checkout-payment__title">Settle Payment</h2>' +
+      (order.discountType ? ui.discountIdField(state.discountId) : "") +
       '<div class="pay-options">' + methods.map(function (m) {
         return '<button type="button" class="pay-option pay-option--lg" data-method="' + m[0] + '" aria-pressed="' + (state.method === m[0]) + '">' +
           '<div class="pay-option__title">' + m[1] + '</div><div class="pay-option__desc">' + m[2] + "</div></button>";
@@ -119,6 +120,7 @@
   paymentEl.addEventListener("input", function (e) {
     if (e.target.id === "cash-input") { state.cash = e.target.value; renderFigures(); }
     if (e.target.id === "gcash-ref")  { state.gcashRef = e.target.value; }
+    if (e.target.id === "discount-id") { state.discountId = e.target.value; }
   });
 
   /* walkin.php re-prices the cart from the database and saves the order and payment together. */
@@ -131,7 +133,8 @@
         return { itemId: e.itemId, qty: e.qty, size: e.size || null, sugarLevel: e.sugarLevel || null, serve: e.temp || null };
       })
     };
-    var payment = { method: state.method, discountType: order.discountType || null };
+    if (order.discountType && !state.discountId.trim()) { ui.toast("Enter the discount ID number."); return; }
+    var payment = { method: state.method, discountType: order.discountType || null, discountIdNo: state.discountId.trim() };
     if (state.method === "cash") payment.cashTendered = figures().cash;
     else payment.gcashRef = state.gcashRef.trim();
 

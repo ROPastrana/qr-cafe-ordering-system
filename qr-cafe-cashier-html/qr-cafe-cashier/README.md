@@ -97,7 +97,7 @@ only file that talks to it, one function per endpoint:
 | `getMenu` | `GET menu.php` (mapped to `isDrink` / `tempOptions`) | manual entry, report |
 | `getOrders` | `GET queue.php` (open orders + today's finished ones) | queue, workspace |
 | `setStatus` | `PATCH status.php` `{ id, status, reason, note }` | queue |
-| `pay` | `POST pay.php` `{ orderId, method, cashTendered / gcashRef, discountType }` | workspace |
+| `pay` | `POST pay.php` `{ orderId, method, cashTendered / gcashRef, discountType, discountIdNo }` | workspace |
 | `walkIn` | `POST walkin.php` (order + payment in one step) | checkout |
 | `getHistory` | `GET history.php?from=&to=&status=` | history, report |
 
@@ -132,7 +132,6 @@ Set `USE_MOCK_DATA: true` to run the pages without PHP.
 
 ## Still open
 
-- Discounts are applied without capturing a PWD / Senior / Student ID number.
 - The demo menu in `data.js` (16 items) is only used with `USE_MOCK_DATA: true`;
   the real screens use `tbl_menu_items` through `menu.php`, like the customer app.
 - On the sales report, the category bars and top items show amounts before

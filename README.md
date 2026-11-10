@@ -163,7 +163,8 @@ again from the database.
 
 - Size: Small −₱20, Medium +₱0, Large +₱20 (only items with sizes).
   Hot-only and iced-only drinks always get their fixed temperature.
-- Discount: 20% of the subtotal for PWD, Senior Citizen or Student.
+- Discount: 20% of the subtotal for PWD, Senior Citizen or Student. The cashier
+  must enter the ID number, which is saved in `tbl_orders.discount_id_no`.
 - Cash tendered must cover the total. GCash reference numbers are 10–13 digits
   and can be used only once.
 - Order code = order id padded to 3 digits (`#001`).
@@ -236,7 +237,8 @@ scripted Microsoft Edge sessions at phone (412 px) and laptop (1366 px) widths:
   items show amounts before discounts; Total Revenue is after discounts.
 - An order number can be skipped when a walk-in payment is refused (the order
   is rolled back but MySQL does not reuse the id).
-- Discounts do not record the PWD / Senior / Student ID number.
+- Discount ID numbers are stored unencrypted. No screen or receipt shows them;
+  they can only be read directly from the database.
 - After 50 wrong passwords from several devices, the account-wide lock still
   reveals that the username exists (the per-IP lock works the same for every
   username).
@@ -250,4 +252,5 @@ scripted Microsoft Edge sessions at phone (412 px) and laptop (1366 px) widths:
   C:\xampp\mysql\bin\mysqldump.exe -u root --routines --databases cafe_pos --result-file="C:\xampp\htdocs\cafe\database\cafe_pos.sql"
   C:\xampp\php\php.exe C:\xampp\htdocs\cafe\database\strip-password-hashes.php
   ```
-  The second command removes password hashes. Always run it before committing.
+  The second command removes password hashes and order data (customer names and
+  discount ID numbers). Always run it before committing.
